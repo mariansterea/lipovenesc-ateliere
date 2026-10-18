@@ -81,3 +81,76 @@
 		font-size: 11pt;
 	}
 }
+
+/* 2.0 */
+.lat-badge--pending {
+	background: #fff4e0;
+	color: #8a5a00;
+}
+
+.lat-badge--checkin {
+	background: #e3f0ff;
+	color: #1d4f8c;
+}
+
+.lat-swatch {
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+	vertical-align: middle;
+	margin-right: 6px;
+	border: 1px solid rgba(0, 0, 0, .1);
+}
+
+.column-lat_color {
+	width: 24px;
+}
+
+.lat-warn {
+	color: #b26a00;
+	font-weight: 600;
+}
+
+.lat-danger {
+	color: #b32d2e;
+}
+
+.lat-media img {
+	display: block;
+	max-width: 240px;
+	height: auto;
+	margin: 6px 0;
+	border-radius: 6px;
+}
+
+.lat-cat-field .description {
+	margin-top: 4px;
+}
+
+.lat-checkin-bar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 10px 0 6px;
+}
+
+.lat-checkin-bar select,
+.lat-checkin-bar input[type=search] {
+	min-width: 220px;
+}
+
+.lat-checkin-table tr.is-present td {
+	background: #eef8f0;
+}
+
+.lat-checkin-table .button {
+	white-space: nowrap;
+}
+
+@media (max-width: 782px) {
+	.lat-checkin-table th:nth-child(3),
+	.lat-checkin-table td:nth-child(3) {
+		display: none;
+	}
+}

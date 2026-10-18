@@ -1,6 +1,7 @@
 <?php
 /**
- * Registrations: post type, creation with capacity lock, waitlist, admin list and edit screen.
+ * Registrations: post type, creation with capacity lock, pending (unpaid) holds,
+ * waitlist, check-in, admin list and edit screen.
  *
  * @package Lipovenesc_Ateliere
  */
@@ -9,7 +10,9 @@ defined( 'ABSPATH' ) || exit;
 
 class LAT_Registrations {
 
-	const FIELDS = array( 'workshop', 'status', 'adults', 'children', 'ages', 'name', 'phone', 'email', 'notes', 'total', 'token', 'source', 'reminded' );
+	const FIELDS = array( 'workshop', 'status', 'adults', 'children', 'ages', 'name', 'phone', 'email', 'notes', 'total', 'token', 'source', 'reminded', 'order_id', 'hold_until', 'checkin', 'paid' );
+
+	const CRON_HOLDS = 'lat_release_holds';
 
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'register' ) );
@@ -23,6 +26,14 @@ class LAT_Registrations {
 		add_filter( 'post_row_actions', array( __CLASS__, 'row_actions' ), 10, 2 );
 		add_action( 'admin_post_lat_status', array( __CLASS__, 'handle_status' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'notices' ) );
+		add_action( self::CRON_HOLDS, array( __CLASS__, 'release_expired_holds' ) );
+		add_action( 'init', array( __CLASS__, 'schedule' ) );
+	}
+
+	public static function schedule() {
+		if ( ! wp_next_scheduled( self::CRON_HOLDS ) ) {
+			wp_schedule_event( time() + 120, 'lat_ten_minutes', self::CRON_HOLDS );
+		}
 	}
 
 	public static function register() {
@@ -61,7 +72,7 @@ class LAT_Registrations {
 		foreach ( self::FIELDS as $f ) {
 			$r[ $f ] = get_post_meta( $id, '_lat_' . $f, true );
 		}
-		foreach ( array( 'workshop', 'adults', 'children' ) as $f ) {
+		foreach ( array( 'workshop', 'adults', 'children', 'order_id', 'hold_until', 'checkin', 'paid' ) as $f ) {
 			$r[ $f ] = (int) $r[ $f ];
 		}
 		return $r;
@@ -73,19 +84,21 @@ class LAT_Registrations {
 				update_post_meta( $id, '_lat_' . $f, $r[ $f ] );
 			}
 		}
-		$who = trim( $r['name'] ) . ' (' . LAT_Helpers::people_label( $r['adults'], $r['children'] ) . ')';
-		remove_action( 'save_post_' . LAT_Helpers::CPT_REG, array( __CLASS__, 'save_admin' ), 10 );
-		wp_update_post(
-			array(
-				'ID'         => $id,
-				'post_title' => $who,
-			)
-		);
-		add_action( 'save_post_' . LAT_Helpers::CPT_REG, array( __CLASS__, 'save_admin' ), 10, 2 );
+		if ( isset( $r['name'] ) ) {
+			$who = trim( $r['name'] ) . ' (' . LAT_Helpers::people_label( $r['adults'], $r['children'] ) . ')';
+			remove_action( 'save_post_' . LAT_Helpers::CPT_REG, array( __CLASS__, 'save_admin' ), 10 );
+			wp_update_post(
+				array(
+					'ID'         => $id,
+					'post_title' => $who,
+				)
+			);
+			add_action( 'save_post_' . LAT_Helpers::CPT_REG, array( __CLASS__, 'save_admin' ), 10, 2 );
+		}
 	}
 
 	/**
-	 * Serialises capacity checks per workshop (MySQL named lock).
+	 * Serialises capacity checks per event (MySQL named lock).
 	 */
 	private static function with_lock( $workshop_id, $callback ) {
 		global $wpdb;
@@ -99,20 +112,20 @@ class LAT_Registrations {
 	}
 
 	/**
-	 * Public registration.
+	 * Public registration (reserve) or ticket purchase start (buy → pending + pay URL).
 	 *
-	 * @return array|WP_Error [ id, status ].
+	 * @return array|WP_Error [ id, status, pay_url ].
 	 */
 	public static function create( $in ) {
 		$ws_id = absint( isset( $in['workshop'] ) ? $in['workshop'] : 0 );
 		$post  = get_post( $ws_id );
 		if ( ! $post || LAT_Helpers::CPT_WS !== $post->post_type || 'publish' !== $post->post_status ) {
-			return new WP_Error( 'lat_ws', 'Atelierul nu mai este disponibil.', array( 'status' => 404 ) );
+			return new WP_Error( 'lat_ws', 'Evenimentul nu mai este disponibil.', array( 'status' => 404 ) );
 		}
 		$m     = LAT_Helpers::ws_meta( $ws_id );
 		$state = LAT_Helpers::ws_state( $ws_id );
-		if ( in_array( $state, array( 'past', 'closed' ), true ) ) {
-			return new WP_Error( 'lat_closed', 'Înscrierile pentru acest atelier s-au închis.', array( 'status' => 400 ) );
+		if ( in_array( $state, array( 'past', 'closed', 'cancelled' ), true ) ) {
+			return new WP_Error( 'lat_closed', 'Înscrierile pentru acest eveniment s-au închis.', array( 'status' => 400 ) );
 		}
 
 		$adults   = absint( isset( $in['adults'] ) ? $in['adults'] : 0 );
@@ -125,10 +138,10 @@ class LAT_Registrations {
 			return new WP_Error( 'lat_people', 'Alegeți câte persoane vin.', array( 'status' => 400 ) );
 		}
 		if ( $adults + $children > (int) $m['max_per'] ) {
-			return new WP_Error( 'lat_people', 'Pe o înscriere pot fi maximum ' . (int) $m['max_per'] . ' persoane. Pentru grupuri mai mari, contactați-ne.', array( 'status' => 400 ) );
+			return new WP_Error( 'lat_people', 'Pe o înscriere pot fi maximum ' . (int) $m['max_per'] . ' persoane. Pentru grupuri mai mari, sunați-ne.', array( 'status' => 400 ) );
 		}
 		if ( 'children' === $m['count'] && $children < 1 ) {
-			return new WP_Error( 'lat_people', 'Atelierul este pentru copii: adăugați cel puțin un copil.', array( 'status' => 400 ) );
+			return new WP_Error( 'lat_people', 'Evenimentul este pentru copii: adăugați cel puțin un copil.', array( 'status' => 400 ) );
 		}
 		if ( mb_strlen( $name ) < 3 ) {
 			return new WP_Error( 'lat_name', 'Scrieți numele complet.', array( 'status' => 400 ) );
@@ -143,29 +156,39 @@ class LAT_Registrations {
 			return new WP_Error( 'lat_consent', 'Bifați acordul pentru prelucrarea datelor.', array( 'status' => 400 ) );
 		}
 
+		$total = LAT_Helpers::price_total( $m, $adults, $children );
+		$buy   = 'buy' === $m['mode_eff'] && null !== $total && $total > 0;
+
 		$r = array(
-			'workshop' => $ws_id,
-			'adults'   => $adults,
-			'children' => $children,
-			'ages'     => sanitize_text_field( isset( $in['ages'] ) ? $in['ages'] : '' ),
-			'name'     => $name,
-			'phone'    => trim( $phone ),
-			'email'    => $email,
-			'notes'    => sanitize_textarea_field( isset( $in['notes'] ) ? $in['notes'] : '' ),
-			'total'    => LAT_Helpers::price_total( $m, $adults, $children ),
-			'token'    => wp_generate_password( 32, false, false ),
-			'source'   => 'site',
-			'reminded' => 0,
+			'workshop'   => $ws_id,
+			'adults'     => $adults,
+			'children'   => $children,
+			'ages'       => sanitize_text_field( isset( $in['ages'] ) ? $in['ages'] : '' ),
+			'name'       => $name,
+			'phone'      => trim( $phone ),
+			'email'      => $email,
+			'notes'      => sanitize_textarea_field( isset( $in['notes'] ) ? $in['notes'] : '' ),
+			'total'      => $total,
+			'token'      => wp_generate_password( 32, false, false ),
+			'source'     => 'site',
+			'reminded'   => 0,
+			'order_id'   => 0,
+			'hold_until' => 0,
+			'checkin'    => 0,
+			'paid'       => 0,
 		);
 		$need          = LAT_Helpers::places_for( $m, $adults, $children );
 		$want_waitlist = ! empty( $in['waitlist'] ) && LAT_Helpers::get( 'waitlist' );
 
 		$result = self::with_lock(
 			$ws_id,
-			function () use ( $ws_id, $need, $want_waitlist, $r ) {
+			function () use ( $ws_id, $need, $want_waitlist, $r, $buy ) {
 				$left = LAT_Helpers::places_left( $ws_id );
 				if ( $need <= $left ) {
-					$r['status'] = 'confirmed';
+					$r['status'] = $buy ? 'pending' : 'confirmed';
+					if ( $buy ) {
+						$r['hold_until'] = time() + max( 5, (int) LAT_Helpers::get( 'hold_minutes' ) ) * MINUTE_IN_SECONDS;
+					}
 				} elseif ( $want_waitlist ) {
 					$r['status'] = 'waitlist';
 				} else {
@@ -192,31 +215,151 @@ class LAT_Registrations {
 				);
 			}
 		);
-
-		if ( ! is_wp_error( $result ) ) {
-			do_action( 'lat_registration_created', $result['id'] );
+		if ( is_wp_error( $result ) ) {
+			return $result;
 		}
+
+		if ( 'pending' === $result['status'] ) {
+			$pay = LAT_Woo::create_order( $result['id'] );
+			if ( is_wp_error( $pay ) ) {
+				// Payment could not be prepared: fall back to a plain reservation so nobody is lost.
+				update_post_meta( $result['id'], '_lat_status', 'confirmed' );
+				update_post_meta( $result['id'], '_lat_hold_until', 0 );
+				$result['status'] = 'confirmed';
+				do_action( 'lat_registration_created', $result['id'] );
+				return $result;
+			}
+			$result['pay_url'] = $pay;
+			return $result;
+		}
+
+		do_action( 'lat_registration_created', $result['id'] );
 		return $result;
 	}
 
-	public static function set_status( $id, $status ) {
+	public static function set_status( $id, $status, $silent = false ) {
 		$r = self::get( $id );
 		if ( ! $r || ! isset( LAT_Helpers::STATUS_LABELS[ $status ] ) || $r['status'] === $status ) {
 			return false;
 		}
 		update_post_meta( $id, '_lat_status', $status );
-		do_action( 'lat_registration_status', $id, $status, $r['status'] );
-		if ( 'confirmed' === $r['status'] ) {
+		if ( 'pending' !== $status ) {
+			update_post_meta( $id, '_lat_hold_until', 0 );
+		}
+		if ( ! $silent ) {
+			do_action( 'lat_registration_status', $id, $status, $r['status'] );
+		}
+		if ( in_array( $r['status'], array( 'confirmed', 'pending' ), true ) && ! in_array( $status, array( 'confirmed', 'pending' ), true ) ) {
 			self::promote_waitlist( $r['workshop'] );
 		}
 		return true;
 	}
 
 	/**
+	 * Called by WooCommerce when the order is paid.
+	 */
+	public static function mark_paid( $id, $order_id ) {
+		$r = self::get( $id );
+		if ( ! $r ) {
+			return;
+		}
+		update_post_meta( $id, '_lat_paid', 1 );
+		update_post_meta( $id, '_lat_order_id', (int) $order_id );
+		update_post_meta( $id, '_lat_hold_until', 0 );
+		if ( 'pending' === $r['status'] ) {
+			update_post_meta( $id, '_lat_status', 'confirmed' );
+			do_action( 'lat_registration_created', $id );
+		}
+	}
+
+	/**
+	 * Pending holds whose time ran out: cancel quietly and free the places.
+	 */
+	public static function release_expired_holds() {
+		$ids = get_posts(
+			array(
+				'post_type'   => LAT_Helpers::CPT_REG,
+				'post_status' => 'publish',
+				'numberposts' => 100,
+				'fields'      => 'ids',
+				'meta_query'  => array( // phpcs:ignore WordPress.DB.SlowDBQuery
+					array(
+						'key'   => '_lat_status',
+						'value' => 'pending',
+					),
+					array(
+						'key'     => '_lat_hold_until',
+						'value'   => time(),
+						'compare' => '<',
+						'type'    => 'NUMERIC',
+					),
+				),
+			)
+		);
+		foreach ( $ids as $id ) {
+			$r = self::get( $id );
+			if ( $r && $r['hold_until'] > 0 ) {
+				self::set_status( $id, 'cancelled', true );
+				update_post_meta( $id, '_lat_notes', trim( $r['notes'] . "\nAnulată automat: plata nu a fost finalizată." ) );
+				if ( class_exists( 'LAT_Woo' ) ) {
+					LAT_Woo::cancel_order( $r['order_id'] );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Cancels every live registration of an event (event cancelled by the farm).
+	 */
+	public static function cancel_all( $ws_id, $reason = 'event' ) {
+		$ids = get_posts(
+			array(
+				'post_type'   => LAT_Helpers::CPT_REG,
+				'post_status' => 'publish',
+				'numberposts' => -1,
+				'fields'      => 'ids',
+				'meta_query'  => array( // phpcs:ignore WordPress.DB.SlowDBQuery
+					array(
+						'key'   => '_lat_workshop',
+						'value' => (int) $ws_id,
+					),
+					array(
+						'key'     => '_lat_status',
+						'value'   => array( 'confirmed', 'pending', 'waitlist' ),
+						'compare' => 'IN',
+					),
+				),
+			)
+		);
+		foreach ( $ids as $id ) {
+			$r = self::get( $id );
+			update_post_meta( $id, '_lat_status', 'cancelled' );
+			update_post_meta( $id, '_lat_hold_until', 0 );
+			if ( $r['paid'] && $r['order_id'] && class_exists( 'LAT_Woo' ) ) {
+				LAT_Woo::refund_order( $r['order_id'], 'Eveniment anulat de organizator' );
+			} elseif ( $r['order_id'] && class_exists( 'LAT_Woo' ) ) {
+				LAT_Woo::cancel_order( $r['order_id'] );
+			}
+			do_action( 'lat_registration_event_cancelled', $id, $reason );
+		}
+		return count( $ids );
+	}
+
+	public static function toggle_checkin( $id, $on = null ) {
+		$r = self::get( $id );
+		if ( ! $r ) {
+			return false;
+		}
+		$new = null === $on ? ( $r['checkin'] ? 0 : time() ) : ( $on ? time() : 0 );
+		update_post_meta( $id, '_lat_checkin', $new );
+		return (bool) $new;
+	}
+
+	/**
 	 * Moves waitlisted registrations (oldest first) into freed places.
 	 */
 	public static function promote_waitlist( $ws_id ) {
-		if ( 'past' === LAT_Helpers::ws_state( $ws_id ) ) {
+		if ( in_array( LAT_Helpers::ws_state( $ws_id ), array( 'past', 'cancelled' ), true ) ) {
 			return;
 		}
 		$promoted = self::with_lock(
@@ -251,7 +394,13 @@ class LAT_Registrations {
 				foreach ( $ids as $rid ) {
 					$need = LAT_Helpers::places_for( $m, get_post_meta( $rid, '_lat_adults', true ), get_post_meta( $rid, '_lat_children', true ) );
 					if ( $need <= $left ) {
-						update_post_meta( $rid, '_lat_status', 'confirmed' );
+						if ( 'buy' === $m['mode_eff'] && (float) get_post_meta( $rid, '_lat_total', true ) > 0 ) {
+							// Paid events: the promoted person gets a hold and a payment link instead of a free seat.
+							update_post_meta( $rid, '_lat_status', 'pending' );
+							update_post_meta( $rid, '_lat_hold_until', time() + 24 * HOUR_IN_SECONDS );
+						} else {
+							update_post_meta( $rid, '_lat_status', 'confirmed' );
+						}
 						$left  -= $need;
 						$done[] = $rid;
 					}
@@ -320,10 +469,10 @@ class LAT_Registrations {
 		?>
 		<table class="form-table">
 			<tr>
-				<th><label for="lat-r-ws">Atelier</label></th>
+				<th><label for="lat-r-ws">Eveniment</label></th>
 				<td><select id="lat-r-ws" name="latr[workshop]">
 					<?php foreach ( $workshops as $w ) : ?>
-						<?php $wm = LAT_Helpers::ws_meta( $w->ID ); ?>
+						<?php $wm = LAT_Helpers::ws_raw( $w->ID ); ?>
 						<option value="<?php echo (int) $w->ID; ?>" <?php selected( $r['workshop'], $w->ID ); ?>><?php echo esc_html( get_the_title( $w ) . ' — ' . ( $wm['date'] ? LAT_Helpers::date_label( $wm['date'] ) . ' ' . $wm['start'] : 'fără dată' ) ); ?></option>
 					<?php endforeach; ?>
 				</select></td>
@@ -357,13 +506,18 @@ class LAT_Registrations {
 						<option value="<?php echo esc_attr( $k ); ?>" <?php selected( $r['status'], $k ); ?>><?php echo esc_html( $label ); ?></option>
 					<?php endforeach; ?>
 				</select>
+				<label style="margin-left:12px"><input type="checkbox" name="latr[paid]" value="1" <?php checked( $r['paid'] ); ?>> Plătit</label>
+				<label style="margin-left:12px"><input type="checkbox" name="latr[checkin]" value="1" <?php checked( $r['checkin'] ); ?>> Prezent (check-in)</label>
 				<?php if ( 'auto-draft' === $post->post_status ) : ?>
-					<p><label><input type="checkbox" name="latr[send_email]" value="1"> Trimite participantului emailul de confirmare</label></p>
+					<p><label><input type="checkbox" name="latr[send_email]" value="1"> Trimite participantului emailul de confirmare (cu bilet)</label></p>
 				<?php endif; ?>
 				</td>
 			</tr>
 			<?php if ( '' !== (string) $r['total'] && null !== $r['total'] ) : ?>
-			<tr><th>Total estimat</th><td><?php echo esc_html( LAT_Helpers::money( (float) $r['total'] ) ); ?></td></tr>
+			<tr><th>Total</th><td><?php echo esc_html( LAT_Helpers::money( (float) $r['total'] ) ); ?><?php echo $r['order_id'] ? ' · <a href="' . esc_url( admin_url( 'post.php?post=' . (int) $r['order_id'] . '&action=edit' ) ) . '">comanda #' . (int) $r['order_id'] . '</a>' : ''; ?></td></tr>
+			<?php endif; ?>
+			<?php if ( $r['token'] ) : ?>
+			<tr><th>Bilet</th><td><a href="<?php echo esc_url( LAT_Helpers::ticket_url( $r['token'] ) ); ?>" target="_blank" rel="noopener">Vezi biletul</a> · cod <?php echo esc_html( LAT_Helpers::ticket_code( $r['token'] ) ); ?></td></tr>
 			<?php endif; ?>
 		</table>
 		<?php
@@ -394,26 +548,32 @@ class LAT_Registrations {
 			'email'    => sanitize_email( isset( $in['email'] ) ? $in['email'] : '' ),
 			'notes'    => sanitize_textarea_field( isset( $in['notes'] ) ? $in['notes'] : '' ),
 			'status'   => $status,
+			'paid'     => empty( $in['paid'] ) ? 0 : 1,
+			'checkin'  => empty( $in['checkin'] ) ? 0 : ( $old['checkin'] ? $old['checkin'] : time() ),
 		);
 		$r['total'] = LAT_Helpers::price_total( $m, $r['adults'], $r['children'] );
 		if ( $is_new ) {
-			$r['token']    = wp_generate_password( 32, false, false );
-			$r['source']   = 'admin';
-			$r['reminded'] = 0;
+			$r['token']      = wp_generate_password( 32, false, false );
+			$r['source']     = 'admin';
+			$r['reminded']   = 0;
+			$r['order_id']   = 0;
+			$r['hold_until'] = 0;
 		}
 		if ( $old['workshop'] && $old['workshop'] !== $ws_id ) {
 			$r['reminded'] = 0;
 		}
+		if ( 'pending' !== $status ) {
+			$r['hold_until'] = 0;
+		}
 
-		// Admins may overbook (e.g. a family that squeezes in), but get a warning.
 		if ( 'confirmed' === $status ) {
-			$others = LAT_Helpers::places_taken( $ws_id ) - ( 'confirmed' === $old['status'] && $old['workshop'] === $ws_id ? LAT_Helpers::places_for( $m, $old['adults'], $old['children'] ) : 0 );
+			$others = LAT_Helpers::places_taken( $ws_id ) - ( in_array( $old['status'], array( 'confirmed', 'pending' ), true ) && $old['workshop'] === $ws_id ? LAT_Helpers::places_for( $m, $old['adults'], $old['children'] ) : 0 );
 			if ( $others + LAT_Helpers::places_for( $m, $r['adults'], $r['children'] ) > (int) $m['capacity'] ) {
-				set_transient( 'lat_notice_' . get_current_user_id(), 'Atenție: atelierul are acum mai mulți participanți decât locurile setate (' . (int) $m['capacity'] . ').', 60 );
+				set_transient( 'lat_notice_' . get_current_user_id(), 'Atenție: evenimentul are acum mai mulți participanți decât locurile setate (' . (int) $m['capacity'] . ').', 60 );
 			}
 		}
 
-		self::save_meta( $post_id, $r + array( 'name' => '' ) );
+		self::save_meta( $post_id, $r );
 		remove_action( 'save_post_' . LAT_Helpers::CPT_REG, array( __CLASS__, 'save_admin' ), 10 );
 		wp_update_post(
 			array(
@@ -428,7 +588,7 @@ class LAT_Registrations {
 		} elseif ( ! $is_new && $old['status'] !== $status ) {
 			do_action( 'lat_registration_status', $post_id, $status, $old['status'] );
 		}
-		if ( 'confirmed' === $old['status'] && ( 'confirmed' !== $status || $old['workshop'] !== $ws_id ) ) {
+		if ( in_array( $old['status'], array( 'confirmed', 'pending' ), true ) && ( ! in_array( $status, array( 'confirmed', 'pending' ), true ) || $old['workshop'] !== $ws_id ) ) {
 			self::promote_waitlist( $old['workshop'] );
 		}
 	}
@@ -442,7 +602,7 @@ class LAT_Registrations {
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['lat_done'] ) ) {
-			echo '<div class="notice notice-success is-dismissible"><p>Statusul înscrierii a fost actualizat.</p></div>';
+			echo '<div class="notice notice-success is-dismissible"><p>Înscrierea a fost actualizată.</p></div>';
 		}
 	}
 
@@ -453,7 +613,7 @@ class LAT_Registrations {
 			'cb'          => $columns['cb'],
 			'title'       => 'Participant',
 			'lat_contact' => 'Contact',
-			'lat_ws'      => 'Atelier',
+			'lat_ws'      => 'Eveniment',
 			'lat_people'  => 'Persoane',
 			'lat_total'   => 'Total',
 			'lat_status'  => 'Status',
@@ -474,7 +634,7 @@ class LAT_Registrations {
 				break;
 			case 'lat_ws':
 				if ( $r['workshop'] ) {
-					$m = LAT_Helpers::ws_meta( $r['workshop'] );
+					$m = LAT_Helpers::ws_raw( $r['workshop'] );
 					echo '<a href="' . esc_url( admin_url( 'edit.php?post_type=' . LAT_Helpers::CPT_REG . '&lat_ws=' . $r['workshop'] ) ) . '">' . esc_html( get_the_title( $r['workshop'] ) ) . '</a><br><span class="lat-muted">' . esc_html( $m['date'] ? LAT_Helpers::date_label( $m['date'] ) . ' ' . $m['start'] : '' ) . '</span>';
 				}
 				break;
@@ -489,10 +649,19 @@ class LAT_Registrations {
 				break;
 			case 'lat_total':
 				echo '' !== (string) $r['total'] ? esc_html( LAT_Helpers::money( (float) $r['total'] ) ) : '—';
+				if ( $r['paid'] ) {
+					echo '<br><span class="lat-badge lat-badge--confirmed">plătit</span>';
+				}
+				if ( $r['order_id'] ) {
+					echo '<br><a class="lat-muted" href="' . esc_url( admin_url( 'post.php?post=' . (int) $r['order_id'] . '&action=edit' ) ) . '">#' . (int) $r['order_id'] . '</a>';
+				}
 				break;
 			case 'lat_status':
 				$label = isset( LAT_Helpers::STATUS_LABELS[ $r['status'] ] ) ? LAT_Helpers::STATUS_LABELS[ $r['status'] ] : $r['status'];
 				echo '<span class="lat-badge lat-badge--' . esc_attr( $r['status'] ) . '">' . esc_html( $label ) . '</span>';
+				if ( $r['checkin'] ) {
+					echo ' <span class="lat-badge lat-badge--checkin">prezent</span>';
+				}
 				if ( 'admin' === $r['source'] ) {
 					echo '<br><span class="lat-muted">adăugată manual</span>';
 				}
@@ -518,9 +687,9 @@ class LAT_Registrations {
 				'order'       => 'DESC',
 			)
 		);
-		echo '<select name="lat_ws"><option value="">Toate atelierele</option>';
+		echo '<select name="lat_ws"><option value="">Toate evenimentele</option>';
 		foreach ( $workshops as $w ) {
-			$m = LAT_Helpers::ws_meta( $w->ID );
+			$m = LAT_Helpers::ws_raw( $w->ID );
 			printf( '<option value="%d" %s>%s</option>', (int) $w->ID, selected( $ws, $w->ID, false ), esc_html( get_the_title( $w ) . ( $m['date'] ? ' — ' . wp_date( 'j M', strtotime( $m['date'] . ' 12:00' ) ) : '' ) ) );
 		}
 		echo '</select><select name="lat_status"><option value="">Toate statusurile</option>';
@@ -563,12 +732,13 @@ class LAT_Registrations {
 		$url    = function ( $to ) use ( $post ) {
 			return wp_nonce_url( admin_url( 'admin-post.php?action=lat_status&id=' . $post->ID . '&to=' . $to ), 'lat_status_' . $post->ID );
 		};
-		if ( 'waitlist' === $status ) {
-			$actions['lat_confirm'] = '<a href="' . esc_url( $url( 'confirmed' ) ) . '">Confirmă (dă-i loc)</a>';
+		if ( in_array( $status, array( 'waitlist', 'pending' ), true ) ) {
+			$actions['lat_confirm'] = '<a href="' . esc_url( $url( 'confirmed' ) ) . '">Confirmă</a>';
 		}
 		if ( 'cancelled' !== $status ) {
 			$actions['lat_cancel'] = '<a href="' . esc_url( $url( 'cancelled' ) ) . '" onclick="return confirm(\'Anulezi înscrierea? Participantul primește un email.\')">Anulează</a>';
 		}
+		$actions['lat_checkin'] = '<a href="' . esc_url( $url( 'checkin' ) ) . '">' . ( get_post_meta( $post->ID, '_lat_checkin', true ) ? 'Scoate prezența' : 'Marchează prezent' ) . '</a>';
 		return $actions;
 	}
 
@@ -578,7 +748,12 @@ class LAT_Registrations {
 		if ( ! current_user_can( 'edit_post', $id ) ) {
 			wp_die( 'Nu ai drepturi pentru această acțiune.' );
 		}
-		self::set_status( $id, isset( $_GET['to'] ) ? sanitize_key( $_GET['to'] ) : '' );
+		$to = isset( $_GET['to'] ) ? sanitize_key( $_GET['to'] ) : '';
+		if ( 'checkin' === $to ) {
+			self::toggle_checkin( $id );
+		} else {
+			self::set_status( $id, $to );
+		}
 		wp_safe_redirect( add_query_arg( 'lat_done', 1, wp_get_referer() ? wp_get_referer() : admin_url( 'edit.php?post_type=' . LAT_Helpers::CPT_REG ) ) );
 		exit;
 	}

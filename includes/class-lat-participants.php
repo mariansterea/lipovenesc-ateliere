@@ -37,6 +37,7 @@ class LAT_Participants {
 		);
 		$out = array(
 			'confirmed' => array(),
+			'pending'   => array(),
 			'waitlist'  => array(),
 			'cancelled' => array(),
 		);
@@ -87,7 +88,7 @@ class LAT_Participants {
 				<input type="hidden" name="page" value="lat-participants">
 				<select name="workshop" onchange="this.form.submit()">
 					<?php foreach ( $workshops as $w ) : ?>
-						<?php $wm = LAT_Helpers::ws_meta( $w->ID ); ?>
+						<?php $wm = LAT_Helpers::ws_raw( $w->ID ); ?>
 						<option value="<?php echo (int) $w->ID; ?>" <?php selected( $ws_id, $w->ID ); ?>><?php echo esc_html( ( $wm['date'] ? wp_date( 'j M Y', strtotime( $wm['date'] . ' 12:00' ) ) . ' — ' : '' ) . get_the_title( $w ) ); ?></option>
 					<?php endforeach; ?>
 				</select>
@@ -102,12 +103,16 @@ class LAT_Participants {
 				<strong><?php echo (int) LAT_Helpers::places_taken( $ws_id ); ?> / <?php echo (int) $m['capacity']; ?></strong> locuri ocupate ·
 				<?php echo (int) $adults; ?> adulți · <?php echo (int) $children; ?> copii
 				<?php if ( $total > 0 ) : ?>
-					· total de încasat: <strong><?php echo esc_html( LAT_Helpers::money( $total ) ); ?></strong>
+					· total: <strong><?php echo esc_html( LAT_Helpers::money( $total ) ); ?></strong>
 				<?php endif; ?>
 			</p>
 
 			<?php self::table( $regs['confirmed'], true ); ?>
 
+			<?php if ( $regs['pending'] ) : ?>
+				<h3>Așteaptă plata online (<?php echo count( $regs['pending'] ); ?>)</h3>
+				<?php self::table( $regs['pending'], false ); ?>
+			<?php endif; ?>
 			<?php if ( $regs['waitlist'] ) : ?>
 				<h3>Listă de așteptare (<?php echo count( $regs['waitlist'] ); ?>)</h3>
 				<?php self::table( $regs['waitlist'], false ); ?>
@@ -128,7 +133,7 @@ class LAT_Participants {
 		<table class="widefat striped lat-table">
 			<thead>
 				<tr>
-					<th>#</th><th>Nume</th><th>Telefon</th><th>Adulți</th><th>Copii</th><th>Vârste</th><th>Total</th><th>Observații</th><th class="lat-print-only">Prezent</th>
+					<th>#</th><th>Nume</th><th>Telefon</th><th>Adulți</th><th>Copii</th><th>Vârste</th><th>Total</th><th>Cod</th><th>Observații</th><th>Prezent</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -140,9 +145,10 @@ class LAT_Participants {
 					<td><?php echo (int) $r['adults']; ?></td>
 					<td><?php echo (int) $r['children']; ?></td>
 					<td><?php echo esc_html( $r['ages'] ); ?></td>
-					<td><?php echo '' !== (string) $r['total'] ? esc_html( LAT_Helpers::money( (float) $r['total'] ) ) : ''; ?></td>
+					<td><?php echo '' !== (string) $r['total'] && null !== $r['total'] ? esc_html( LAT_Helpers::money( (float) $r['total'] ) . ( $r['paid'] ? ' ✓' : '' ) ) : ''; ?></td>
+					<td><code><?php echo esc_html( LAT_Helpers::ticket_code( $r['token'] ) ); ?></code></td>
 					<td><?php echo esc_html( $r['notes'] ); ?></td>
-					<td class="lat-print-only">☐</td>
+					<td><?php echo $r['checkin'] ? '✓ ' . esc_html( wp_date( 'H:i', $r['checkin'] ) ) : '☐'; ?></td>
 				</tr>
 			<?php endforeach; ?>
 			</tbody>
@@ -164,8 +170,8 @@ class LAT_Participants {
 		header( 'Content-Disposition: attachment; filename="' . $file . '"' );
 		$out = fopen( 'php://output', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 		fwrite( $out, "\xEF\xBB\xBF" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- BOM so Excel reads diacritics.
-		fputcsv( $out, array( 'Status', 'Nume', 'Telefon', 'Email', 'Adulți', 'Copii', 'Vârste', 'Total (lei)', 'Observații', 'Înscris la' ), ';' );
-		foreach ( array( 'confirmed', 'waitlist', 'cancelled' ) as $status ) {
+		fputcsv( $out, array( 'Status', 'Nume', 'Telefon', 'Email', 'Adulți', 'Copii', 'Vârste', 'Total (lei)', 'Plătit online', 'Cod bilet', 'Prezent', 'Observații', 'Înscris la' ), ';' );
+		foreach ( array( 'confirmed', 'pending', 'waitlist', 'cancelled' ) as $status ) {
 			foreach ( $regs[ $status ] as $r ) {
 				fputcsv(
 					$out,
@@ -177,7 +183,10 @@ class LAT_Participants {
 						$r['adults'],
 						$r['children'],
 						$r['ages'],
-						'' !== (string) $r['total'] ? str_replace( '.', ',', (string) (float) $r['total'] ) : '',
+						'' !== (string) $r['total'] && null !== $r['total'] ? str_replace( '.', ',', (string) (float) $r['total'] ) : '',
+						$r['paid'] ? 'da' : '',
+						LAT_Helpers::ticket_code( $r['token'] ),
+						$r['checkin'] ? 'da' : '',
 						$r['notes'],
 						get_the_date( 'Y-m-d H:i', $r['id'] ),
 					),

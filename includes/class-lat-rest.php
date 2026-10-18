@@ -37,14 +37,20 @@ class LAT_Rest {
 	}
 
 	/**
-	 * Live places for all upcoming workshops (the page itself may be cached).
+	 * Live places for all upcoming events (the page itself may be cached).
 	 */
-	public static function places() {
+	public static function places( WP_REST_Request $request ) {
 		$out = array();
-		foreach ( LAT_Helpers::upcoming_ids() as $id ) {
+		$ids = $request->get_param( 'ids' );
+		$ids = $ids ? array_filter( array_map( 'absint', explode( ',', (string) $ids ) ) ) : LAT_Helpers::upcoming_ids();
+		foreach ( $ids as $id ) {
+			if ( LAT_Helpers::CPT_WS !== get_post_type( $id ) ) {
+				continue;
+			}
 			$out[ $id ] = array(
 				'left'  => LAT_Helpers::places_left( $id ),
 				'state' => LAT_Helpers::ws_state( $id ),
+				'text'  => LAT_Frontend::places_text( LAT_Helpers::ws_state( $id ), LAT_Helpers::places_left( $id ) ),
 			);
 		}
 		$response = rest_ensure_response( $out );
@@ -55,7 +61,7 @@ class LAT_Rest {
 	private static function rate_limited() {
 		$key = 'lat_rl_' . md5( LAT_Helpers::client_ip() );
 		$n   = (int) get_transient( $key );
-		if ( $n >= 8 ) {
+		if ( $n >= 10 ) {
 			return true;
 		}
 		set_transient( $key, $n + 1, HOUR_IN_SECONDS );
@@ -89,11 +95,13 @@ class LAT_Rest {
 				'ok'      => true,
 				'status'  => $r['status'],
 				'left'    => LAT_Helpers::places_left( $r['workshop'] ),
+				'pay_url' => isset( $result['pay_url'] ) ? $result['pay_url'] : '',
+				'ticket'  => in_array( $r['status'], array( 'confirmed' ), true ) ? LAT_Helpers::ticket_url( $r['token'] ) : '',
 				'summary' => array(
 					'title'  => get_the_title( $r['workshop'] ),
 					'when'   => LAT_Helpers::date_label( $m['date'] ) . ', ' . $m['start'] . '–' . $m['end'],
 					'people' => LAT_Helpers::people_label( $r['adults'], $r['children'] ),
-					'total'  => '' !== (string) $r['total'] ? LAT_Helpers::money( (float) $r['total'] ) : '',
+					'total'  => '' !== (string) $r['total'] && null !== $r['total'] ? LAT_Helpers::money( (float) $r['total'] ) : '',
 				),
 			)
 		);
