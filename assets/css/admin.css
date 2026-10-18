@@ -1,0 +1,83 @@
+/* Lipovenesc Ateliere – admin */
+.lat-muted {
+	color: #787c82;
+}
+
+.lat-bar {
+	width: 120px;
+	height: 6px;
+	margin-top: 4px;
+	border-radius: 3px;
+	background: #f0f0f1;
+	overflow: hidden;
+}
+
+.lat-bar span {
+	display: block;
+	height: 100%;
+	background: #2f5d50;
+}
+
+.lat-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 10px;
+	font-size: 12px;
+	font-weight: 600;
+	background: #f0f0f1;
+	color: #50575e;
+}
+
+.lat-badge--confirmed {
+	background: #e7f5ec;
+	color: #1a7a3e;
+}
+
+.lat-badge--waitlist {
+	background: #fcf3e3;
+	color: #8a5a00;
+}
+
+.lat-badge--cancelled {
+	background: #f6e5e5;
+	color: #8a1f1f;
+}
+
+.lat-summary {
+	font-size: 14px;
+}
+
+.lat-table {
+	max-width: 1200px;
+	margin-bottom: 16px;
+}
+
+.lat-print-only {
+	display: none;
+}
+
+@media print {
+	#adminmenumain,
+	#wpadminbar,
+	#wpfooter,
+	.lat-noprint,
+	.notice,
+	#screen-meta-links {
+		display: none !important;
+	}
+
+	#wpcontent {
+		margin-left: 0 !important;
+		padding: 0 !important;
+	}
+
+	.lat-print-only {
+		display: table-cell;
+		text-align: center;
+	}
+
+	.lat-table {
+		max-width: none;
+		font-size: 11pt;
+	}
+}

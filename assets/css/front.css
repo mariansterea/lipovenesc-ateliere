@@ -1,0 +1,520 @@
+/* Lipovenesc Ateliere – calendar */
+.lat-app {
+	--lat-accent: #2f5d50;
+	--lat-ink: #1f2328;
+	--lat-muted: #667085;
+	--lat-line: #e4e7ec;
+	--lat-soft: #f6f7f5;
+	max-width: 960px;
+	margin: 24px auto;
+	color: var(--lat-ink);
+	font-size: 16px;
+	line-height: 1.5;
+}
+
+.lat-app *,
+.lat-app *::before,
+.lat-app *::after {
+	box-sizing: border-box;
+}
+
+.lat-app [hidden] {
+	display: none !important;
+}
+
+.lat-app button {
+	font: inherit;
+	text-transform: none;
+	letter-spacing: normal;
+	box-shadow: none;
+}
+
+.lat-empty {
+	padding: 18px;
+	background: var(--lat-soft);
+	border-radius: 12px;
+	color: var(--lat-muted);
+}
+
+/* Top: mini calendar + chips */
+.lat-top {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px 24px;
+	align-items: flex-start;
+	margin-bottom: 8px;
+}
+
+.lat-cal {
+	width: 280px;
+	padding: 12px;
+	border: 1px solid var(--lat-line);
+	border-radius: 14px;
+	background: #fff;
+}
+
+.lat-cal-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 8px;
+}
+
+.lat-app .lat-cal-nav {
+	width: 32px;
+	height: 32px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: var(--lat-ink);
+	font-size: 20px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.lat-app .lat-cal-nav:hover {
+	background: var(--lat-soft);
+	color: var(--lat-ink);
+}
+
+.lat-cal-grid {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 2px;
+	text-align: center;
+	font-size: 14px;
+}
+
+.lat-cal-wd {
+	color: var(--lat-muted);
+	font-size: 12px;
+	padding: 2px 0;
+}
+
+.lat-cal-day {
+	display: block;
+	padding: 6px 0;
+	color: #b0b6bf;
+	border-radius: 8px;
+}
+
+.lat-app .lat-cal-day.has-ev {
+	margin: 0;
+	border: 0;
+	background: color-mix(in srgb, var(--lat-accent) 12%, #fff);
+	color: var(--lat-accent);
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.lat-app .lat-cal-day.has-ev:hover,
+.lat-app .lat-cal-day.is-on {
+	background: var(--lat-accent);
+	color: #fff;
+}
+
+.lat-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	flex: 1;
+	min-width: 220px;
+}
+
+.lat-app .lat-chip {
+	margin: 0;
+	padding: 6px 14px;
+	border: 1px solid var(--lat-line);
+	border-radius: 999px;
+	background: #fff;
+	color: var(--lat-ink);
+	cursor: pointer;
+}
+
+.lat-app .lat-chip:hover:not(.is-on) {
+	background: #fff;
+	color: var(--lat-ink);
+	border-color: var(--lat-accent);
+}
+
+.lat-app .lat-chip.is-on {
+	background: var(--lat-accent);
+	border-color: var(--lat-accent);
+	color: #fff;
+}
+
+.lat-filter-note {
+	margin: 16px 0 0;
+	color: var(--lat-muted);
+}
+
+.lat-app .lat-link {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--lat-accent);
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+/* List */
+.lat-app .lat-month {
+	margin: 28px 0 12px;
+	font-size: 1.3em;
+}
+
+.lat-card {
+	position: relative;
+	display: grid;
+	grid-template-columns: 220px minmax(0, 1fr);
+	margin: 0 0 16px;
+	border: 1px solid var(--lat-line);
+	border-radius: 16px;
+	background: #fff;
+	overflow: hidden;
+}
+
+.lat-card:not(:has(.lat-img)) {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+.lat-card:not(:has(.lat-img)) .lat-body {
+	padding-left: 92px;
+}
+
+.lat-img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	min-height: 200px;
+	margin: 0;
+	object-fit: cover;
+}
+
+.lat-badge-date {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 56px;
+	padding: 6px 0;
+	border-radius: 12px;
+	background: #fff;
+	box-shadow: 0 2px 8px rgba(16, 24, 40, 0.15);
+	line-height: 1.1;
+}
+
+.lat-badge-day {
+	font-size: 22px;
+	font-weight: 800;
+	color: var(--lat-accent);
+}
+
+.lat-badge-mon {
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	color: var(--lat-muted);
+}
+
+.lat-body {
+	padding: 18px 20px;
+}
+
+.lat-app .lat-title {
+	margin: 0 0 4px;
+	font-size: 1.2em;
+	line-height: 1.25;
+}
+
+.lat-when {
+	margin: 0 0 8px;
+	color: var(--lat-muted);
+	font-size: 0.92em;
+}
+
+.lat-intro {
+	margin: 0 0 10px;
+}
+
+.lat-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0 0 10px;
+}
+
+.lat-tag {
+	padding: 2px 10px;
+	border-radius: 999px;
+	background: var(--lat-soft);
+	font-size: 0.85em;
+}
+
+.lat-tag--price {
+	background: color-mix(in srgb, var(--lat-accent) 12%, #fff);
+	color: var(--lat-accent);
+	font-weight: 700;
+}
+
+.lat-details {
+	margin: 0 0 12px;
+}
+
+.lat-details summary {
+	cursor: pointer;
+	color: var(--lat-accent);
+	font-weight: 600;
+}
+
+.lat-content > :last-child {
+	margin-bottom: 0;
+}
+
+.lat-foot {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.lat-places {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 160px;
+	font-size: 0.9em;
+	font-weight: 600;
+}
+
+.lat-bar {
+	display: block;
+	height: 6px;
+	border-radius: 3px;
+	background: var(--lat-soft);
+	overflow: hidden;
+}
+
+.lat-bar span {
+	display: block;
+	height: 100%;
+	background: var(--lat-accent);
+}
+
+.lat-card--full .lat-places,
+.lat-card--closed .lat-places {
+	color: #8a1f1f;
+}
+
+.lat-app .lat-btn {
+	margin: 0;
+	padding: 10px 20px;
+	border: 0;
+	border-radius: 10px;
+	background: var(--lat-accent);
+	color: #fff;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.lat-app .lat-btn:hover,
+.lat-app .lat-btn:focus {
+	background: var(--lat-accent);
+	color: #fff;
+	filter: brightness(1.08);
+}
+
+.lat-app .lat-btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.lat-card--full .lat-open {
+	background: #fff;
+	color: var(--lat-accent);
+	box-shadow: inset 0 0 0 2px var(--lat-accent);
+}
+
+.lat-app button:focus-visible {
+	outline: 3px solid var(--lat-accent);
+	outline-offset: 2px;
+}
+
+/* Form */
+.lat-form {
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 1px solid var(--lat-line);
+}
+
+.lat-steppers {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px 24px;
+	margin-bottom: 12px;
+}
+
+.lat-stepper {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.lat-stepper-label {
+	min-width: 56px;
+	font-weight: 600;
+}
+
+.lat-app .lat-stepper button {
+	width: 36px;
+	height: 36px;
+	margin: 0;
+	padding: 0;
+	border: 1px solid var(--lat-line);
+	border-radius: 50%;
+	background: #fff;
+	color: var(--lat-ink);
+	font-size: 18px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.lat-app .lat-stepper input {
+	width: 52px;
+	margin: 0;
+	padding: 6px;
+	border: 1px solid #cfd4dc;
+	border-radius: 8px;
+	text-align: center;
+	font: inherit;
+}
+
+.lat-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 0 12px;
+}
+
+.lat-field {
+	display: block;
+	margin: 0 0 12px;
+}
+
+.lat-field > span {
+	display: block;
+	margin-bottom: 4px;
+	font-size: 0.9em;
+	font-weight: 600;
+}
+
+.lat-app .lat-field input,
+.lat-app .lat-field textarea {
+	display: block;
+	width: 100%;
+	margin: 0;
+	padding: 10px 12px;
+	border: 1px solid #cfd4dc;
+	border-radius: 8px;
+	background: #fff;
+	color: var(--lat-ink);
+	font: inherit;
+}
+
+.lat-app .lat-field input:focus,
+.lat-app .lat-field textarea:focus,
+.lat-app .lat-stepper input:focus {
+	outline: 2px solid var(--lat-accent);
+	outline-offset: 1px;
+}
+
+.lat-hp {
+	position: absolute !important;
+	left: -9999px !important;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+
+.lat-consent {
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
+	margin: 4px 0 12px;
+	font-size: 0.9em;
+}
+
+.lat-consent input {
+	margin-top: 4px;
+	accent-color: var(--lat-accent);
+}
+
+.lat-total {
+	margin: 0 0 12px;
+	font-weight: 700;
+}
+
+.lat-wait {
+	margin: 0 0 12px;
+	padding: 10px 14px;
+	border-radius: 8px;
+	background: #fcf3e3;
+	color: #6b4a00;
+}
+
+.lat-error {
+	margin: 0 0 12px;
+	padding: 10px 14px;
+	border-radius: 8px;
+	background: #fdecec;
+	color: #8a1f1f;
+}
+
+.lat-success {
+	margin-top: 16px;
+	padding: 14px 16px;
+	border-radius: 10px;
+	background: color-mix(in srgb, var(--lat-accent) 10%, #fff);
+}
+
+.lat-success p {
+	margin: 4px 0 0;
+}
+
+.lat-muted {
+	color: var(--lat-muted);
+	font-size: 0.9em;
+}
+
+@media (max-width: 720px) {
+	.lat-cal {
+		width: 100%;
+	}
+
+	.lat-card {
+		grid-template-columns: 1fr;
+	}
+
+	.lat-img {
+		min-height: 160px;
+		max-height: 220px;
+	}
+
+	.lat-card:not(:has(.lat-img)) .lat-body {
+		padding-left: 20px;
+		padding-top: 80px;
+	}
+
+	.lat-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.lat-app .lat-btn {
+		width: 100%;
+	}
+}
