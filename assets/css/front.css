@@ -811,7 +811,7 @@ picture.lat-img img {
 
 .lat-steppers {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
 	gap: 12px;
 	margin-bottom: 12px;
 }
@@ -874,7 +874,7 @@ picture.lat-img img {
 
 .lat-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
 	gap: 12px;
 }
 
@@ -893,6 +893,9 @@ picture.lat-img img {
 .lat-app .lat-field input,
 .lat-app .lat-field textarea {
 	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
 	margin: 0;
 	padding: 12px 12px;
 	border: 1px solid var(--lat-line);
@@ -958,7 +961,7 @@ picture.lat-img img {
 .lat-summary dd {
 	margin: 0;
 	min-width: 0;
-	overflow-wrap: anywhere;
+	overflow-wrap: break-word;
 }
 
 .lat-app .lat-form input.is-invalid,

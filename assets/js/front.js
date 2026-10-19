@@ -262,16 +262,16 @@
 				]),
 				field('Observații (opțional)', h('textarea', { name: 'notes', rows: 2, placeholder: 'Alergii, nevoi speciale, întrebări' })),
 				h('label', { class: 'lat-hp', 'aria-hidden': 'true' }, ['Website', h('input', { name: 'website', tabindex: '-1', autocomplete: 'off' })]),
+				h('label', { class: 'lat-consent' }, [h('input', { type: 'checkbox', name: 'consent', value: '1' }), h('span', { html: gdpr })]),
 				h('div', { class: 'lat-nav' }, [
 					h('button', { type: 'button', class: 'lat-btn lat-btn--ghost', text: 'Înapoi', onclick: function () { go(1); } }),
-					h('button', { type: 'button', class: 'lat-btn', text: 'Continuă', onclick: function () { if (validContact()) go(3); } })
+					h('button', { type: 'button', class: 'lat-btn', text: 'Continuă', onclick: function () { if (validContact() && validConsent()) go(3); } })
 				])
 			]);
 
 			var step3 = h('div', { class: 'lat-step', hidden: true }, [
 				h('h5', { class: 'lat-step-title', text: buy ? 'Verificați și plătiți' : 'Verificați și confirmați' }),
 				summary,
-				h('label', { class: 'lat-consent' }, [h('input', { type: 'checkbox', name: 'consent', value: '1' }), h('span', { html: gdpr })]),
 				h('div', { class: 'lat-nav' }, [
 					h('button', { type: 'button', class: 'lat-btn lat-btn--ghost', text: 'Înapoi', onclick: function () { go(2); } }),
 					submit
@@ -386,6 +386,12 @@
 				return true;
 			}
 
+			function validConsent() {
+				if (el.namedItem('consent').checked) return true;
+				fail('Bifați acordul pentru prelucrarea datelor.', el.namedItem('consent').closest('.lat-consent'));
+				return false;
+			}
+
 			function renderSummary() {
 				var c = counts();
 				var rows = [
@@ -393,7 +399,9 @@
 					['Când', card.getAttribute('data-when') || ((card.querySelector('.lat-when') || {}).textContent || '')],
 					['Participanți', c.adults + (c.adults === 1 ? ' adult' : ' adulți') + (c.children ? ', ' + c.children + (c.children === 1 ? ' copil' : ' copii') : '')],
 					['Nume', el.namedItem('name').value.trim()],
-					['Contact', el.namedItem('phone').value.trim() + ' · ' + el.namedItem('email').value.trim()]
+					['Telefon', el.namedItem('phone').value.trim()],
+					// Spațiu invizibil după @: emailul lung se rupe acolo, nu în mijlocul domeniului.
+					['Email', el.namedItem('email').value.trim().replace('@', '@\u200B')]
 				];
 				if (paid) rows.push(['Total', (amount() > 0 ? money(amount()) : 'gratuit') + (buy ? ' (online)' : ' (la fermă)')]);
 				if (waiting()) rows.push(['Status', 'listă de așteptare']);
@@ -406,7 +414,7 @@
 			form.addEventListener('submit', function (e) {
 				e.preventDefault();
 				if (!validPeople() || !validContact()) return;
-				if (!el.namedItem('consent').checked) return fail('Bifați acordul pentru prelucrarea datelor, apoi apăsați din nou.', el.namedItem('consent').closest('.lat-consent'));
+				if (!el.namedItem('consent').checked) { go(2); validConsent(); return; }
 				var c = counts();
 				var data = {
 					workshop: card.getAttribute('data-id'),
