@@ -799,10 +799,14 @@ picture.lat-img img {
 	display: none;
 }
 
-.lat-step-title {
+.lat-app .lat-step-title {
 	font-family: var(--lat-serif);
 	font-size: 20px;
+	font-weight: 500;
+	line-height: 1.25;
+	color: var(--lat-ink);
 	margin: 0 0 12px;
+	padding: 0;
 }
 
 .lat-steppers {
@@ -937,7 +941,7 @@ picture.lat-img img {
 
 .lat-summary dl {
 	display: grid;
-	grid-template-columns: auto 1fr;
+	grid-template-columns: auto minmax(0, 1fr);
 	gap: 6px 14px;
 	margin: 0;
 }
@@ -953,6 +957,15 @@ picture.lat-img img {
 
 .lat-summary dd {
 	margin: 0;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.lat-consent.is-invalid {
+	padding: 8px 10px;
+	border-radius: 8px;
+	background: #fbe9e7;
+	outline: 1.5px solid #c0392b;
 }
 
 .lat-total {
@@ -1137,6 +1150,23 @@ picture.lat-img img {
 
 	.lat-form {
 		padding: 14px;
+	}
+
+	.lat-summary {
+		padding: 12px;
+	}
+
+	.lat-summary dl {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 0;
+	}
+
+	.lat-summary dt {
+		padding-top: 10px;
+	}
+
+	.lat-summary dt:first-child {
+		padding-top: 0;
 	}
 
 	.lat-stepper {

@@ -303,9 +303,15 @@
 				};
 			}
 
-			function fail(msg) {
+			function fail(msg, field) {
 				err.textContent = msg;
 				err.hidden = false;
+				// Mesajul apare în pasul vizibil, chiar deasupra butoanelor, nu la capătul formularului.
+				var cur = steps.filter(function (s) { return !s.hidden; })[0];
+				var nav = cur && cur.querySelector('.lat-nav');
+				if (nav) cur.insertBefore(err, nav);
+				[].forEach.call(form.querySelectorAll('.is-invalid'), function (x) { x.classList.remove('is-invalid'); });
+				if (field) field.classList.add('is-invalid');
 				err.scrollIntoView({ behavior: 'smooth', block: 'center' });
 			}
 
@@ -344,6 +350,13 @@
 				form.setAttribute('data-wait', w ? '1' : '');
 			}
 			form.addEventListener('input', refresh);
+			form.addEventListener('change', function (e) {
+				if (e.target.name === 'consent' && e.target.checked) {
+					err.hidden = true;
+					var l = e.target.closest('.lat-consent');
+					if (l) l.classList.remove('is-invalid');
+				}
+			});
 
 			function validPeople() {
 				var c = counts();
@@ -384,7 +397,7 @@
 			form.addEventListener('submit', function (e) {
 				e.preventDefault();
 				if (!validPeople() || !validContact()) return;
-				if (!el.namedItem('consent').checked) return fail('Bifați acordul pentru prelucrarea datelor.');
+				if (!el.namedItem('consent').checked) return fail('Bifați acordul pentru prelucrarea datelor, apoi apăsați din nou.', el.namedItem('consent').closest('.lat-consent'));
 				var c = counts();
 				var data = {
 					workshop: card.getAttribute('data-id'),
