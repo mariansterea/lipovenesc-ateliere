@@ -64,8 +64,46 @@ class LAT_Updater {
 		if ( empty( $data ) ) {
 			$data = self::latest_tag();
 		}
+		if ( empty( $data ) ) {
+			$data = self::main_branch();
+		}
 		set_site_transient( self::TRANSIENT, $data, 6 * HOUR_IN_SECONDS );
 		return $data;
+	}
+
+	/**
+	 * Fără release și fără tag: versiunea din antetul fișierului principal de pe ramura main.
+	 */
+	private static function main_branch() {
+		$res = wp_remote_get(
+			'https://raw.githubusercontent.com/' . self::REPO . '/main/lipovenesc-ateliere.php',
+			array(
+				'timeout' => 10,
+				'headers' => array( 'User-Agent' => 'lipovenesc-ateliere/' . LAT_VERSION . '; ' . home_url( '/' ) ),
+			)
+		);
+		if ( is_wp_error( $res ) || 200 !== wp_remote_retrieve_response_code( $res ) ) {
+			return array();
+		}
+		if ( ! preg_match( '/^[\s\*]*Version:\s*([0-9.]+)/mi', wp_remote_retrieve_body( $res ), $mm ) ) {
+			return array();
+		}
+		$notes = '';
+		$rd    = wp_remote_get( 'https://raw.githubusercontent.com/' . self::REPO . '/main/readme.txt', array( 'timeout' => 10 ) );
+		if ( ! is_wp_error( $rd ) && 200 === wp_remote_retrieve_response_code( $rd ) ) {
+			$txt = wp_remote_retrieve_body( $rd );
+			$pos = strpos( $txt, '== Changelog ==' );
+			if ( false !== $pos ) {
+				$notes = trim( substr( $txt, $pos + 15, 1500 ) );
+			}
+		}
+		return array(
+			'version' => $mm[1],
+			'package' => 'https://api.github.com/repos/' . self::REPO . '/zipball/main',
+			'url'     => 'https://github.com/' . self::REPO,
+			'notes'   => $notes,
+			'date'    => '',
+		);
 	}
 
 	/**
