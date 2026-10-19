@@ -22,8 +22,8 @@ class LAT_Helpers {
 	);
 
 	const MODES = array(
-		'reserve' => 'Rezervă (plata la fermă sau gratuit)',
 		'buy'     => 'Cumpără bilet (plată online prin WooCommerce)',
+		'reserve' => 'Rezervă (plata se face la fermă)',
 	);
 
 	/* ---------- Settings ---------- */
@@ -77,9 +77,10 @@ class LAT_Helpers {
 			'min'         => 0,
 			'capacity'    => 20,
 			'count'       => 'all',
+			'free'        => 0,
 			'price_adult' => '',
 			'price_child' => '',
-			'mode'        => 'reserve',
+			'mode'        => 'buy',
 			'ages'        => '',
 			'cta'         => '',
 			'order'       => 0,
@@ -140,6 +141,7 @@ class LAT_Helpers {
 			'capacity'    => '',
 			'min'         => '',
 			'count'       => 'inherit',
+			'free'        => 'inherit',
 			'price_adult' => '',
 			'price_child' => '',
 			'inherit_price' => 1,
@@ -178,9 +180,17 @@ class LAT_Helpers {
 		if ( 'inherit' === $m['count'] ) {
 			$m['count'] = $c['count'];
 		}
+		if ( 'inherit' === (string) $m['free'] ) {
+			$m['free'] = (int) $c['free'];
+		}
+		$m['free'] = (int) $m['free'];
 		if ( ! empty( $m['inherit_price'] ) ) {
 			$m['price_adult'] = $c['price_adult'];
 			$m['price_child'] = $c['price_child'];
+		}
+		if ( $m['free'] ) {
+			$m['price_adult'] = '';
+			$m['price_child'] = '';
 		}
 		if ( 'inherit' === $m['mode'] ) {
 			$m['mode'] = $c['mode'];
@@ -205,6 +215,9 @@ class LAT_Helpers {
 	 * "buy" only when WooCommerce is usable and there is something to pay.
 	 */
 	public static function effective_mode( $m ) {
+		if ( ! empty( $m['free'] ) ) {
+			return 'reserve';
+		}
 		if ( 'buy' === $m['mode'] && self::woo_active() && self::has_price( $m ) ) {
 			return 'buy';
 		}
@@ -215,6 +228,13 @@ class LAT_Helpers {
 		$pa = self::num( $m['price_adult'] );
 		$pc = self::num( $m['price_child'] );
 		return ( null !== $pa && $pa > 0 ) || ( null !== $pc && $pc > 0 );
+	}
+
+	/**
+	 * Paid event with no price set yet (category and event both empty): needs attention in the admin.
+	 */
+	public static function price_missing( $m ) {
+		return empty( $m['free'] ) && ! self::has_price( $m );
 	}
 
 	/**
@@ -333,8 +353,11 @@ class LAT_Helpers {
 	public static function price_label( $meta ) {
 		$pa = trim( (string) $meta['price_adult'] );
 		$pc = trim( (string) $meta['price_child'] );
-		if ( ( '' === $pa || '0' === $pa ) && ( '' === $pc || '0' === $pc ) ) {
+		if ( ! empty( $meta['free'] ) ) {
 			return 'Gratuit';
+		}
+		if ( ( '' === $pa || '0' === $pa ) && ( '' === $pc || '0' === $pc ) ) {
+			return 'Preț în curând';
 		}
 		$fmt = function ( $p ) {
 			return is_numeric( str_replace( ',', '.', $p ) ) ? self::money( self::num( $p ) ) : $p;

@@ -24,6 +24,20 @@
 		$(this).prop('hidden', true);
 	});
 
+	// Free events: price and booking-mode rows are irrelevant.
+	function toggleFree() {
+		var sel = $('.lat-free-select');
+		if (sel.length) {
+			$('.lat-row-price').toggle(sel.val() !== '1');
+		}
+		var box = $('.lat-free');
+		if (box.length) {
+			box.closest('form').find('[name="lat_cat[price_adult]"], [name="lat_cat[mode]"]').closest('.form-field, tr').toggle(!box.prop('checked'));
+		}
+	}
+	$(document).on('change', '.lat-free-select, .lat-free', toggleFree);
+	$(toggleFree);
+
 	$(document).on('change', '.lat-inherit-price', function () {
 		$(this).closest('td').find('.lat-price-own').prop('hidden', this.checked);
 	});

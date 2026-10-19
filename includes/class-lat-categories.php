@@ -19,6 +19,7 @@ class LAT_Categories {
 		add_filter( 'manage_' . LAT_Helpers::TAX . '_custom_column', array( __CLASS__, 'column' ), 10, 3 );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'assets' ) );
 		add_action( 'admin_init', array( __CLASS__, 'seed' ) );
+		add_action( 'admin_init', array( __CLASS__, 'migrate_paid_default' ), 11 );
 	}
 
 	/**
@@ -49,6 +50,28 @@ class LAT_Categories {
 		update_option( 'lat_cats_seeded', 1 );
 	}
 
+	/**
+	 * 2.1: paid is the default. Categories saved before had mode "reserve" with no explicit "free" flag;
+	 * move them to "buy" once, so only categories ticked as free stay free.
+	 */
+	public static function migrate_paid_default() {
+		if ( get_option( 'lat_migr_paid_default' ) ) {
+			return;
+		}
+		$terms = get_terms( array( 'taxonomy' => LAT_Helpers::TAX, 'hide_empty' => false ) );
+		if ( ! is_wp_error( $terms ) ) {
+			foreach ( $terms as $t ) {
+				$meta = get_term_meta( $t->term_id, '_lat_cat', true );
+				if ( is_array( $meta ) && ! isset( $meta['free'] ) ) {
+					$meta['free'] = 0;
+					$meta['mode'] = 'buy';
+					update_term_meta( $t->term_id, '_lat_cat', $meta );
+				}
+			}
+		}
+		update_option( 'lat_migr_paid_default', 1 );
+	}
+
 	public static function assets( $hook ) {
 		if ( in_array( $hook, array( 'edit-tags.php', 'term.php' ), true ) ) {
 			$screen = get_current_screen();
@@ -69,7 +92,8 @@ class LAT_Categories {
 			'image'       => array( 'Imagine', '<div class="lat-media"><input type="hidden" name="lat_cat[image_id]" value="' . (int) $c['image_id'] . '"><img src="' . esc_url( $img ) . '" alt="" ' . ( $img ? '' : 'hidden' ) . '><button type="button" class="button lat-media-pick">Alege imaginea</button> <button type="button" class="button-link lat-media-clear" ' . ( $img ? '' : 'hidden' ) . '>Scoate</button></div><p class="description">Fotografia mare a categoriei (ca în secțiunea cu trei coloane de pe homepage).</p>' ),
 			'color'       => array( 'Culoare', '<input type="color" name="lat_cat[color]" value="' . esc_attr( $c['color'] ) . '"><p class="description">Banda colorată a cardurilor din această categorie.</p>' ),
 			'people'      => array( 'Participanți', 'minim <input type="number" min="0" class="small-text" name="lat_cat[min]" value="' . (int) $c['min'] . '"> · maxim <input type="number" min="1" class="small-text" name="lat_cat[capacity]" value="' . (int) $c['capacity'] . '"> <select name="lat_cat[count]"><option value="all" ' . selected( $c['count'], 'all', false ) . '>se numără toți (adulți + copii)</option><option value="children" ' . selected( $c['count'], 'children', false ) . '>se numără doar copiii</option></select><p class="description">Minim 0 = evenimentul are loc oricum. Dacă minimul nu e atins cu ' . (int) LAT_Helpers::get( 'min_alert_h' ) . ' ore înainte, primiți o alertă pe email.</p>' ),
-			'price'       => array( 'Preț implicit', 'Adult <input type="text" class="small-text" name="lat_cat[price_adult]" value="' . esc_attr( $c['price_adult'] ) . '" placeholder="80"> lei · Copil <input type="text" class="small-text" name="lat_cat[price_child]" value="' . esc_attr( $c['price_child'] ) . '" placeholder="60"> lei<p class="description">Gol = gratuit. 0 la adult = adulții însoțitori nu plătesc. Orice eveniment poate suprascrie prețul.</p>' ),
+			'free'        => array( 'Acces', '<label><input type="hidden" name="lat_cat[free]" value="0"><input type="checkbox" class="lat-free" name="lat_cat[free]" value="1" ' . checked( $c['free'], 1, false ) . '> Evenimentele din această categorie sunt gratuite</label><p class="description">Implicit, evenimentele sunt cu plată. Bifați doar pentru categorii fără taxă de participare.</p>' ),
+			'price'       => array( 'Preț implicit', 'Adult <input type="text" class="small-text" name="lat_cat[price_adult]" value="' . esc_attr( $c['price_adult'] ) . '" placeholder="80"> lei · Copil <input type="text" class="small-text" name="lat_cat[price_child]" value="' . esc_attr( $c['price_child'] ) . '" placeholder="60"> lei<p class="description">Obligatoriu la categoriile cu plată. 0 la adult = adulții însoțitori nu plătesc. Orice eveniment poate suprascrie prețul.</p>' ),
 			'mode'        => array( 'Mod de rezervare', self::mode_select( 'lat_cat[mode]', $c['mode'] ) ),
 			'ages'        => array( 'Vârstă recomandată', '<input type="text" class="regular-text" name="lat_cat[ages]" value="' . esc_attr( $c['ages'] ) . '" placeholder="4–12 ani">' ),
 			'cta'         => array( 'Text buton (opțional)', '<input type="text" class="regular-text" name="lat_cat[cta]" value="' . esc_attr( $c['cta'] ) . '" placeholder="Rezervă / Cumpără bilet">' ),
@@ -123,9 +147,10 @@ class LAT_Categories {
 			'min'         => absint( isset( $in['min'] ) ? $in['min'] : 0 ),
 			'capacity'    => max( 1, absint( isset( $in['capacity'] ) ? $in['capacity'] : 20 ) ),
 			'count'       => isset( $in['count'] ) && 'children' === $in['count'] ? 'children' : 'all',
+			'free'        => empty( $in['free'] ) ? 0 : 1,
 			'price_adult' => sanitize_text_field( isset( $in['price_adult'] ) ? $in['price_adult'] : '' ),
 			'price_child' => sanitize_text_field( isset( $in['price_child'] ) ? $in['price_child'] : '' ),
-			'mode'        => isset( $in['mode'] ) && isset( LAT_Helpers::MODES[ $in['mode'] ] ) ? $in['mode'] : 'reserve',
+			'mode'        => isset( $in['mode'] ) && isset( LAT_Helpers::MODES[ $in['mode'] ] ) ? $in['mode'] : 'buy',
 			'ages'        => sanitize_text_field( isset( $in['ages'] ) ? $in['ages'] : '' ),
 			'cta'         => sanitize_text_field( isset( $in['cta'] ) ? $in['cta'] : '' ),
 			'order'       => absint( isset( $in['order'] ) ? $in['order'] : 0 ),
@@ -158,7 +183,7 @@ class LAT_Categories {
 			'<span class="lat-swatch" style="background:' . esc_attr( $c['color'] ) . '"></span>',
 			esc_html( ( $c['min'] ? 'min ' . (int) $c['min'] . ' · ' : '' ) . 'max ' . (int) $c['capacity'] ),
 			esc_html( LAT_Helpers::price_label( $c ) ),
-			esc_html( 'buy' === $c['mode'] ? 'Cumpără bilet' : 'Rezervă' ),
+			esc_html( $c['free'] ? 'Gratuit' : ( 'buy' === $c['mode'] ? 'Cumpără bilet' : 'Rezervă' ) ),
 		);
 		return implode( ' · ', $parts );
 	}

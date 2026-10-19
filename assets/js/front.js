@@ -317,7 +317,7 @@
 				if (paid) {
 					var t = amount();
 					total.innerHTML = '';
-					total.appendChild(document.createTextNode('Total: ' + (t > 0 ? money(t) : 'gratuit')));
+					total.appendChild(document.createTextNode('Total: ' + (t > 0 ? money(t) : (card.getAttribute('data-free') === '1' ? 'gratuit' : 'preț anunțat în curând'))));
 					total.appendChild(h('small', { text: buy ? 'plată online' : 'plata la fermă' }));
 					total.hidden = false;
 				} else {

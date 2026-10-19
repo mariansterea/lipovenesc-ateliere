@@ -335,6 +335,7 @@ class LAT_Frontend {
 			data-count="<?php echo esc_attr( $m['count'] ); ?>"
 			data-max="<?php echo (int) $m['max_per']; ?>"
 			data-mode="<?php echo esc_attr( $m['mode_eff'] ); ?>"
+			data-free="<?php echo (int) $m['free']; ?>"
 			data-price-adult="<?php echo esc_attr( $m['price_adult'] ); ?>"
 			data-price-child="<?php echo esc_attr( $m['price_child'] ); ?>"
 			data-cta="<?php echo esc_attr( $cta ); ?>"
@@ -458,6 +459,9 @@ class LAT_Frontend {
 				'validFrom'     => get_the_date( DATE_ATOM, $id ),
 			),
 		);
+		if ( LAT_Helpers::price_missing( $m ) ) {
+			unset( $event['offers'] ); // Preț neanunțat încă: fără ofertă cu 0 lei în date structurate.
+		}
 		if ( $url ) {
 			$event['url'] = $url;
 		}

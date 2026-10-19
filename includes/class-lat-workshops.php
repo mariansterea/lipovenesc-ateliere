@@ -136,20 +136,34 @@ class LAT_Workshops {
 				</td>
 			</tr>
 			<tr>
+				<th>Acces</th>
+				<td>
+					<select name="lat[free]" class="lat-free-select">
+						<option value="inherit" <?php selected( (string) $m['free'], 'inherit' ); ?>>ca în categorie (<?php echo $c['free'] ? 'gratuit' : 'cu plată'; ?>)</option>
+						<option value="0" <?php selected( (string) $m['free'], '0' ); ?>>cu plată</option>
+						<option value="1" <?php selected( (string) $m['free'], '1' ); ?>>gratuit</option>
+					</select>
+					<p class="description">Implicit, evenimentele sunt cu plată. „Gratuit” se alege explicit, iar atunci prețul și plata online nu se mai aplică.</p>
+				</td>
+			</tr>
+			<tr class="lat-row-price">
 				<th>Preț</th>
 				<td>
 					<label><input type="hidden" name="lat[inherit_price]" value="0"><input type="checkbox" name="lat[inherit_price]" value="1" class="lat-inherit-price" <?php checked( $m['inherit_price'] ); ?>> Prețul categoriei (<?php echo esc_html( LAT_Helpers::price_label( $c ) ); ?>)</label>
 					<div class="lat-price-own" <?php echo $m['inherit_price'] ? 'hidden' : ''; ?>>
 						Adult <input type="text" class="small-text" name="lat[price_adult]" value="<?php echo esc_attr( $m['price_adult'] ); ?>" placeholder="80"> lei &nbsp;
 						Copil <input type="text" class="small-text" name="lat[price_child]" value="<?php echo esc_attr( $m['price_child'] ); ?>" placeholder="60"> lei
-						<p class="description">Lasă ambele goale pentru gratuit. Copil gol = prețul de adult. 0 la adult = adulții însoțitori nu plătesc.</p>
+						<p class="description">Copil gol = prețul de adult. 0 la adult = adulții însoțitori nu plătesc.</p>
 					</div>
+					<?php if ( LAT_Helpers::price_missing( $eff ) ) : ?>
+						<p class="description" style="color:#b32d2e"><strong>Lipsește prețul.</strong> Evenimentul e cu plată, dar nici el, nici categoria nu au preț. Pe site apare „Preț în curând” și înscrierea merge pe „Rezervă”, fără plată online.</p>
+					<?php endif; ?>
 				</td>
 			</tr>
-			<tr>
+			<tr class="lat-row-price">
 				<th>Mod de rezervare</th>
 				<td><?php echo LAT_Categories::mode_select( 'lat[mode]', $m['mode'], 'ca în categorie (' . ( 'buy' === $c['mode'] ? 'Cumpără bilet' : 'Rezervă' ) . ')' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-					<p class="description">„Rezervă”: locul se ține, plata la fermă (sau gratuit). „Cumpără bilet”: plata online acum, prin WooCommerce; locul se ține <?php echo (int) LAT_Helpers::get( 'hold_minutes' ); ?> de minute până la plată.</p></td>
+					<p class="description">„Cumpără bilet”: plata online acum, prin WooCommerce; locul se ține <?php echo (int) LAT_Helpers::get( 'hold_minutes' ); ?> de minute până la plată. „Rezervă”: locul se ține, plata se face la fermă.</p></td>
 			</tr>
 			<tr>
 				<th><label for="lat-ages">Vârstă recomandată</label></th>
@@ -196,7 +210,11 @@ class LAT_Workshops {
 		if ( $wait ) {
 			printf( '<p>%d înscrieri pe lista de așteptare</p>', (int) $wait );
 		}
-		printf( '<p>Mod: <strong>%s</strong>%s</p>', 'buy' === $m['mode_eff'] ? 'Cumpără bilet' : 'Rezervă', 'buy' === $m['mode'] && 'buy' !== $m['mode_eff'] ? ' <span class="lat-muted">(WooCommerce indisponibil sau preț 0, se folosește Rezervă)</span>' : '' );
+		if ( $m['free'] ) {
+			echo '<p>Acces: <strong>gratuit</strong> (înscriere cu „Rezervă”)</p>';
+		} else {
+			printf( '<p>Mod: <strong>%s</strong> · %s%s</p>', 'buy' === $m['mode_eff'] ? 'Cumpără bilet' : 'Rezervă', esc_html( LAT_Helpers::price_label( $m ) ), 'buy' === $m['mode'] && 'buy' !== $m['mode_eff'] ? ' <span class="lat-muted">(' . ( LAT_Helpers::price_missing( $m ) ? 'lipsește prețul' : 'WooCommerce indisponibil' ) . ', se folosește Rezervă)</span>' : '' );
+		}
 		printf( '<p><a class="button" href="%s">Lista participanților</a> <a class="button" href="%s">Check-in</a></p>', esc_url( admin_url( 'edit.php?post_type=' . LAT_Helpers::CPT_WS . '&page=lat-participants&workshop=' . $post->ID ) ), esc_url( admin_url( 'edit.php?post_type=' . LAT_Helpers::CPT_WS . '&page=lat-checkin&workshop=' . $post->ID ) ) );
 		printf( '<p><a href="%s">Toate înscrierile</a></p>', esc_url( admin_url( 'edit.php?post_type=' . LAT_Helpers::CPT_REG . '&lat_ws=' . $post->ID ) ) );
 		if ( empty( $m['cancelled'] ) && 'past' !== $state ) {
@@ -266,6 +284,7 @@ class LAT_Workshops {
 			'capacity'      => $opt( isset( $in['capacity'] ) ? $in['capacity'] : '' ),
 			'min'           => $opt( isset( $in['min'] ) ? $in['min'] : '' ),
 			'count'         => isset( $in['count'] ) && in_array( $in['count'], array( 'inherit', 'all', 'children' ), true ) ? $in['count'] : 'inherit',
+			'free'          => isset( $in['free'] ) && in_array( (string) $in['free'], array( '0', '1' ), true ) ? (int) $in['free'] : 'inherit',
 			'price_adult'   => sanitize_text_field( isset( $in['price_adult'] ) ? $in['price_adult'] : '' ),
 			'price_child'   => sanitize_text_field( isset( $in['price_child'] ) ? $in['price_child'] : '' ),
 			'inherit_price' => empty( $in['inherit_price'] ) ? 0 : 1,
@@ -338,8 +357,8 @@ class LAT_Workshops {
 				(int) $pct
 			);
 		} elseif ( 'lat_mode' === $column ) {
-			echo esc_html( 'buy' === $m['mode_eff'] ? 'Bilet online' : 'Rezervare' );
-			echo '<br><span class="lat-muted">' . esc_html( LAT_Helpers::price_label( $m ) ) . '</span>';
+			echo esc_html( $m['free'] ? 'Gratuit' : ( 'buy' === $m['mode_eff'] ? 'Bilet online' : 'Rezervare' ) );
+			echo '<br><span class="' . ( LAT_Helpers::price_missing( $m ) ? 'lat-warn' : 'lat-muted' ) . '">' . esc_html( LAT_Helpers::price_label( $m ) ) . '</span>';
 		}
 	}
 
