@@ -22,7 +22,6 @@ class LAT_Workshops {
 		add_filter( 'post_row_actions', array( __CLASS__, 'row_actions' ), 10, 2 );
 		add_action( 'admin_post_lat_duplicate', array( __CLASS__, 'duplicate' ) );
 		add_action( 'admin_post_lat_cancel_event', array( __CLASS__, 'cancel_event' ) );
-		add_action( 'admin_post_lat_multi_dates', array( __CLASS__, 'multi_dates' ) );
 		add_filter( 'enter_title_here', array( __CLASS__, 'title_placeholder' ), 10, 2 );
 	}
 
@@ -238,12 +237,10 @@ class LAT_Workshops {
 			echo '<p>Toate evenimentele din categorie:<br><code>[lipovenesc_evenimente categorie="' . esc_html( $cat->slug ) . '"]</code></p>';
 		}
 		echo '<p class="lat-muted">Lista completă: <code>[lipovenesc_evenimente]</code> · Cardurile celor 3 categorii: <code>[lipovenesc_categorii]</code> · Următoarele 3: <code>[lipovenesc_evenimente layout="urmatoarele" limit="3"]</code></p>';
-		echo '<hr><p><strong>Duplică la alte date</strong></p><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		wp_nonce_field( 'lat_multi_' . $post->ID );
-		echo '<input type="hidden" name="action" value="lat_multi_dates"><input type="hidden" name="id" value="' . (int) $post->ID . '">';
-		echo '<textarea name="dates" rows="3" class="widefat" placeholder="2026-11-08&#10;2026-11-15&#10;2026-11-22"></textarea>';
-		echo '<p class="description">O dată pe rând (AAAA-LL-ZZ). Se creează copii ca ciorne, cu aceleași ore, prețuri și locuri.</p>';
-		echo '<p><button class="button">Creează copiile</button></p></form>';
+		// Câmpurile stau în formularul mare de editare (un <form> în alt <form> ar rupe salvarea).
+		echo '<hr><p><strong>Duplică la alte date</strong></p>';
+		echo '<textarea name="lat_dup_dates" rows="3" class="widefat" placeholder="2026-11-08&#10;2026-11-15&#10;2026-11-22"></textarea>';
+		echo '<p class="description">O dată pe rând (AAAA-LL-ZZ), apoi apăsați „Actualizează”. Se creează copii ca ciorne, cu aceleași ore, prețuri și locuri.</p>';
 	}
 
 	public static function state_label( $state ) {
@@ -302,6 +299,21 @@ class LAT_Workshops {
 			$data['capacity'] = max( 1, (int) $data['capacity'] );
 		}
 		update_post_meta( $post_id, '_lat', $data );
+
+		// Copii la alte date, cerute din căsuța „Promovare și embed”.
+		if ( ! empty( $_POST['lat_dup_dates'] ) ) {
+			$raw   = sanitize_textarea_field( wp_unslash( $_POST['lat_dup_dates'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce-ul formularului e verificat mai sus.
+			$dates = array_filter( array_map( 'trim', preg_split( '/[\s,;]+/', $raw ) ) );
+			$n     = 0;
+			remove_action( 'save_post_' . LAT_Helpers::CPT_WS, array( __CLASS__, 'save' ), 10 );
+			foreach ( $dates as $date ) {
+				if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) && self::copy( $post_id, $date ) ) {
+					$n++;
+				}
+			}
+			add_action( 'save_post_' . LAT_Helpers::CPT_WS, array( __CLASS__, 'save' ), 10, 2 );
+			set_transient( 'lat_notice_' . get_current_user_id(), $n . ' copii create ca ciorne (Evenimente → Ciorne). Verificați-le și publicați-le.', 60 );
+		}
 		update_post_meta( $post_id, '_lat_start', $date ? $date . ' ' . $data['start'] : '' );
 
 		// Keep the WooCommerce product in sync (created lazily, only for paid events).
@@ -436,25 +448,6 @@ class LAT_Workshops {
 		}
 		$new = self::copy( $id, '' );
 		wp_safe_redirect( admin_url( 'post.php?post=' . $new . '&action=edit' ) );
-		exit;
-	}
-
-	public static function multi_dates() {
-		$id = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
-		check_admin_referer( 'lat_multi_' . $id );
-		if ( ! current_user_can( 'edit_post', $id ) ) {
-			wp_die( 'Nu ai drepturi pentru această acțiune.' );
-		}
-		$raw   = isset( $_POST['dates'] ) ? sanitize_textarea_field( wp_unslash( $_POST['dates'] ) ) : '';
-		$dates = array_filter( array_map( 'trim', preg_split( '/[\s,;]+/', $raw ) ) );
-		$n     = 0;
-		foreach ( $dates as $date ) {
-			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) && self::copy( $id, $date ) ) {
-				$n++;
-			}
-		}
-		set_transient( 'lat_notice_' . get_current_user_id(), $n . ' copii create ca ciorne. Verificați-le și publicați-le.', 60 );
-		wp_safe_redirect( admin_url( 'edit.php?post_type=' . LAT_Helpers::CPT_WS . '&post_status=draft' ) );
 		exit;
 	}
 
