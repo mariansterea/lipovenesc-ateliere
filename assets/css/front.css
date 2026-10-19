@@ -200,6 +200,21 @@
 	flex: none;
 }
 
+/* Imagify / WebP wrappers: când <img> ajunge într-un <picture>, clasa rămâne pe <picture>. */
+picture.lat-tile-img,
+picture.lat-img {
+	overflow: hidden;
+}
+
+picture.lat-tile-img img,
+picture.lat-img img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: inherit;
+}
+
 .lat-tile-img--empty {
 	background: linear-gradient(160deg, color-mix(in srgb, var(--lat-c) 35%, #fff), color-mix(in srgb, var(--lat-c) 70%, #000));
 }
