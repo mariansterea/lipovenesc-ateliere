@@ -1,7 +1,7 @@
 === Lipovenesc Evenimente ===
 Requires at least: 6.0
 Requires PHP: 7.4
-Stable tag: 2.1.3
+Stable tag: 2.2.0
 License: GPLv2 or later
 
 Evenimente în curte cu înscriere online, bilete și plată prin WooCommerce.
@@ -28,6 +28,10 @@ Evenimente în curte cu înscriere online, bilete și plată prin WooCommerce.
 4. Puneți [lipovenesc_categorii] și [lipovenesc_evenimente] pe pagina Evenimente în curte.
 
 == Changelog ==
+
+= 2.2.0 =
+* Lista de evenimente compactă, ca un calendar: titlu, preț, oră, locuri libere și vârstă pe card; data completă, descrierea, minimul de participanți și bara de locuri intră în „Detalii”.
+* Pe telefon și tabletă, cardurile din listă nu mai afișează poza (rămâne pe pagina evenimentului); butonul stă pe același rând cu „Detalii”.
 
 = 2.1.3 =
 * Cardurile de categorie duc direct la lista filtrată (ancoră #lat-lista).

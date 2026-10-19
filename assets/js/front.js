@@ -56,6 +56,17 @@
 			if (!c.querySelector('.lat-img')) c.classList.add('no-img');
 		});
 
+		// „Detalii” pe cardurile din listă: deschide / închide panoul cu descrierea și locurile.
+		app.addEventListener('click', function (e) {
+			var t = e.target.closest ? e.target.closest('.lat-more-toggle') : null;
+			if (!t || !app.contains(t)) return;
+			var panel = document.getElementById(t.getAttribute('aria-controls'));
+			if (!panel) return;
+			var open = t.getAttribute('aria-expanded') !== 'true';
+			t.setAttribute('aria-expanded', open ? 'true' : 'false');
+			panel.hidden = !open;
+		});
+
 		/* ---------- Filtering ---------- */
 
 		function applyFilter() {
@@ -357,7 +368,7 @@
 				var c = counts();
 				var rows = [
 					['Eveniment', card.getAttribute('data-title')],
-					['Când', (card.querySelector('.lat-when') || {}).textContent || ''],
+					['Când', card.getAttribute('data-when') || ((card.querySelector('.lat-when') || {}).textContent || '')],
 					['Participanți', c.adults + (c.adults === 1 ? ' adult' : ' adulți') + (c.children ? ', ' + c.children + (c.children === 1 ? ' copil' : ' copii') : '')],
 					['Nume', el.namedItem('name').value.trim()],
 					['Contact', el.namedItem('phone').value.trim() + ' · ' + el.namedItem('email').value.trim()]

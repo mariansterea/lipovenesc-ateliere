@@ -324,6 +324,9 @@ class LAT_Frontend {
 		$cta    = $m['cta'] ? $m['cta'] : ( $buy ? 'Cumpără bilet' : 'Rezervă' );
 		$minmsg = $m['min'] > 0 && ! LAT_Helpers::min_reached( $id ) && in_array( $state, array( 'open', 'full' ), true ) ? 'Se confirmă la ' . (int) $m['min'] . ' participanți (' . (int) LAT_Helpers::people_confirmed( $id ) . ' înscriși)' : '';
 		$can    = ! $archive && ( 'open' === $state || ( 'full' === $state && LAT_Helpers::get( 'waitlist' ) ) );
+		$when   = LAT_Helpers::date_label( $m['date'] ) . ' · ' . $m['start'] . '–' . $m['end'] . ( $m['location'] ? ' · ' . $m['location'] : '' );
+		$taken  = (int) $m['capacity'] - $left;
+		$pct    = (int) min( 100, round( $taken / max( 1, (int) $m['capacity'] ) * 100 ) );
 		self::collect_schema( $id, $m );
 		?>
 		<article class="lat-card lat-card--<?php echo esc_attr( $state ); ?><?php echo $expanded ? ' is-expanded' : ''; ?><?php echo $page ? ' lat-card--page' : ''; ?>" id="eveniment-<?php echo (int) $id; ?>"
@@ -341,7 +344,8 @@ class LAT_Frontend {
 			data-price-adult="<?php echo esc_attr( $m['price_adult'] ); ?>"
 			data-price-child="<?php echo esc_attr( $m['price_child'] ); ?>"
 			data-cta="<?php echo esc_attr( $cta ); ?>"
-			data-title="<?php echo esc_attr( get_the_title( $id ) ); ?>">
+			data-title="<?php echo esc_attr( get_the_title( $id ) ); ?>"
+			data-when="<?php echo esc_attr( $when ); ?>">
 			<div class="lat-card-side">
 				<div class="lat-badge-date" aria-hidden="true">
 					<span class="lat-badge-day"><?php echo esc_html( gmdate( 'j', $ts ) ); ?></span>
@@ -366,38 +370,51 @@ class LAT_Frontend {
 					</div>
 					<span class="lat-price"><?php echo esc_html( LAT_Helpers::price_label( $m ) ); ?></span>
 				</div>
-				<p class="lat-when"><?php echo esc_html( LAT_Helpers::date_label( $m['date'] ) . ' · ' . $m['start'] . '–' . $m['end'] . ( $m['location'] ? ' · ' . $m['location'] : '' ) ); ?></p>
-				<?php if ( $intro && ! $page ) : ?>
-					<p class="lat-intro"><?php echo esc_html( $intro ); ?></p>
-				<?php endif; ?>
-				<p class="lat-tags">
-					<span class="lat-state lat-state--<?php echo esc_attr( $state ); ?>"><span class="lat-dot"></span><span class="lat-places-text"><?php echo esc_html( self::places_text( $state, $left ) ); ?></span></span>
-					<?php if ( $m['ages'] ) : ?><span class="lat-tag"><?php echo esc_html( $m['ages'] ); ?></span><?php endif; ?>
-					<?php if ( $minmsg ) : ?><span class="lat-tag lat-tag--min"><?php echo esc_html( $minmsg ); ?></span><?php endif; ?>
-				</p>
-				<?php if ( trim( $post->post_content ) || $m['bring'] ) : ?>
-					<?php if ( $page ) : ?>
-						<div class="lat-content"><?php echo wp_kses_post( wpautop( $post->post_content ) ); ?></div>
-						<?php if ( $m['bring'] ) : ?><p class="lat-bring"><strong>Ce să aduceți:</strong> <?php echo esc_html( $m['bring'] ); ?></p><?php endif; ?>
-					<?php else : ?>
-						<details class="lat-details"<?php echo $expanded ? ' open' : ''; ?>>
-							<summary>Detalii</summary>
-							<div class="lat-content"><?php echo wp_kses_post( wpautop( $post->post_content ) ); ?></div>
-							<?php if ( $m['bring'] ) : ?><p class="lat-bring"><strong>Ce să aduceți:</strong> <?php echo esc_html( $m['bring'] ); ?></p><?php endif; ?>
-						</details>
-					<?php endif; ?>
-				<?php endif; ?>
-				<div class="lat-foot">
-					<div class="lat-places">
-						<span class="lat-bar"><span style="width:<?php echo (int) min( 100, round( ( (int) $m['capacity'] - $left ) / max( 1, (int) $m['capacity'] ) * 100 ) ); ?>%"></span></span>
-						<span class="lat-places-note"><?php echo esc_html( ( (int) $m['capacity'] - $left ) . ' din ' . (int) $m['capacity'] . ' locuri ocupate' ); ?></span>
+				<?php if ( $page ) : ?>
+					<p class="lat-when"><?php echo esc_html( $when ); ?></p>
+					<p class="lat-tags">
+						<span class="lat-state lat-state--<?php echo esc_attr( $state ); ?>"><span class="lat-dot"></span><span class="lat-places-text"><?php echo esc_html( self::places_text( $state, $left ) ); ?></span></span>
+						<?php if ( $m['ages'] ) : ?><span class="lat-tag"><?php echo esc_html( $m['ages'] ); ?></span><?php endif; ?>
+						<?php if ( $minmsg ) : ?><span class="lat-tag lat-tag--min"><?php echo esc_html( $minmsg ); ?></span><?php endif; ?>
+					</p>
+					<?php if ( trim( $post->post_content ) ) : ?><div class="lat-content"><?php echo wp_kses_post( wpautop( $post->post_content ) ); ?></div><?php endif; ?>
+					<?php if ( $m['bring'] ) : ?><p class="lat-bring"><strong>Ce să aduceți:</strong> <?php echo esc_html( $m['bring'] ); ?></p><?php endif; ?>
+					<div class="lat-foot">
+						<div class="lat-places">
+							<span class="lat-bar"><span style="width:<?php echo (int) $pct; ?>%"></span></span>
+							<span class="lat-places-note"><?php echo esc_html( $taken . ' din ' . (int) $m['capacity'] . ' locuri ocupate' ); ?></span>
+						</div>
+						<?php if ( $can ) : ?>
+							<button type="button" class="lat-btn lat-open"><?php echo esc_html( 'open' === $state ? $cta : 'Listă de așteptare' ); ?></button>
+						<?php endif; ?>
 					</div>
-					<?php if ( $can ) : ?>
-						<button type="button" class="lat-btn lat-open"><?php echo esc_html( 'open' === $state ? $cta : 'Listă de așteptare' ); ?></button>
-					<?php elseif ( $url && ! $page && ! $archive ) : ?>
-						<a class="lat-btn lat-btn--ghost" href="<?php echo esc_url( $url ); ?>">Detalii</a>
+				<?php else : ?>
+					<p class="lat-meta">
+						<span class="lat-time"><?php echo esc_html( $m['start'] . '–' . $m['end'] ); ?></span>
+						<span class="lat-state lat-state--<?php echo esc_attr( $state ); ?>"><span class="lat-dot"></span><span class="lat-places-text"><?php echo esc_html( self::places_text( $state, $left ) ); ?></span></span>
+						<?php if ( $m['ages'] ) : ?><span class="lat-tag"><?php echo esc_html( $m['ages'] ); ?></span><?php endif; ?>
+					</p>
+					<?php if ( $intro ) : ?>
+						<p class="lat-intro"><?php echo esc_html( $intro ); ?></p>
 					<?php endif; ?>
-				</div>
+					<div class="lat-foot">
+						<button type="button" class="lat-more-toggle" aria-expanded="<?php echo $expanded ? 'true' : 'false'; ?>" aria-controls="lat-more-<?php echo (int) $id; ?>">Detalii</button>
+						<?php if ( $can ) : ?>
+							<button type="button" class="lat-btn lat-open"><?php echo esc_html( 'open' === $state ? $cta : 'Listă de așteptare' ); ?></button>
+						<?php endif; ?>
+					</div>
+					<div class="lat-more" id="lat-more-<?php echo (int) $id; ?>"<?php echo $expanded ? '' : ' hidden'; ?>>
+						<p class="lat-when"><?php echo esc_html( $when ); ?></p>
+						<?php if ( trim( $post->post_content ) ) : ?><div class="lat-content"><?php echo wp_kses_post( wpautop( $post->post_content ) ); ?></div><?php endif; ?>
+						<?php if ( $m['bring'] ) : ?><p class="lat-bring"><strong>Ce să aduceți:</strong> <?php echo esc_html( $m['bring'] ); ?></p><?php endif; ?>
+						<?php if ( $minmsg ) : ?><p class="lat-min-note"><?php echo esc_html( $minmsg ); ?></p><?php endif; ?>
+						<div class="lat-places">
+							<span class="lat-bar"><span style="width:<?php echo (int) $pct; ?>%"></span></span>
+							<span class="lat-places-note"><?php echo esc_html( $taken . ' din ' . (int) $m['capacity'] . ' locuri ocupate' ); ?></span>
+						</div>
+						<?php if ( $url ) : ?><p class="lat-more-link"><a href="<?php echo esc_url( $url ); ?>">Pagina evenimentului →</a></p><?php endif; ?>
+					</div>
+				<?php endif; ?>
 				<div class="lat-form-slot"></div>
 				<?php if ( $page ) : ?>
 					<p class="lat-share"><span>Distribuie:</span>
