@@ -1164,6 +1164,16 @@ picture.lat-img img {
 	font-size: 21px;
 }
 
+.lat-card:not(.lat-card--page) .lat-head {
+	flex-direction: column;
+	gap: 2px;
+}
+
+.lat-card:not(.lat-card--page) .lat-price {
+	font-size: 16px;
+	padding-top: 0;
+}
+
 .lat-meta {
 	display: flex;
 	flex-wrap: wrap;
@@ -1279,9 +1289,38 @@ picture.lat-img img {
 		grid-template-columns: 76px 1fr;
 	}
 
-	.lat-card:not(.lat-card--page) .lat-img-link,
-	.lat-card:not(.lat-card--page) .lat-img {
-		display: none;
+	/* Miniatură pătrată în colțul din dreapta sus, fără să îngusteze formularul sau „Detalii”. */
+	.lat-card:not(.lat-card--page) .lat-img-link {
+		position: absolute;
+		top: 14px;
+		right: 16px;
+		width: 80px;
+		height: 80px;
+		z-index: 1;
+	}
+
+	.lat-card:not(.lat-card--page) .lat-img,
+	.lat-card:not(.lat-card--page) picture.lat-img {
+		width: 80px;
+		height: 80px;
+		margin: 0;
+		border-radius: 10px;
+	}
+
+	.lat-card:not(.lat-card--page) > .lat-img,
+	.lat-card:not(.lat-card--page) > picture.lat-img {
+		position: absolute;
+		top: 14px;
+		right: 16px;
+	}
+
+	.lat-card.has-img:not(.lat-card--page) .lat-head {
+		padding-right: 92px;
+		min-height: 80px;
+	}
+
+	.lat-card.has-img:not(.lat-card--page) .lat-price {
+		white-space: normal;
 	}
 
 	.lat-card:not(.lat-card--page) .lat-card-side {
@@ -1328,6 +1367,25 @@ picture.lat-img img {
 	.lat-card:not(.lat-card--page) .lat-price {
 		font-size: 15px;
 		padding-top: 0;
+	}
+
+	.lat-card:not(.lat-card--page) .lat-img-link,
+	.lat-card:not(.lat-card--page) > .lat-img,
+	.lat-card:not(.lat-card--page) > picture.lat-img {
+		top: 12px;
+		right: 12px;
+	}
+
+	.lat-card:not(.lat-card--page) .lat-img-link,
+	.lat-card:not(.lat-card--page) .lat-img,
+	.lat-card:not(.lat-card--page) picture.lat-img {
+		width: 68px;
+		height: 68px;
+	}
+
+	.lat-card.has-img:not(.lat-card--page) .lat-head {
+		padding-right: 78px;
+		min-height: 68px;
 	}
 
 	.lat-time {

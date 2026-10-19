@@ -329,7 +329,7 @@ class LAT_Frontend {
 		$pct    = (int) min( 100, round( $taken / max( 1, (int) $m['capacity'] ) * 100 ) );
 		self::collect_schema( $id, $m );
 		?>
-		<article class="lat-card lat-card--<?php echo esc_attr( $state ); ?><?php echo $expanded ? ' is-expanded' : ''; ?><?php echo $page ? ' lat-card--page' : ''; ?>" id="eveniment-<?php echo (int) $id; ?>"
+		<article class="lat-card lat-card--<?php echo esc_attr( $state ); ?><?php echo $expanded ? ' is-expanded' : ''; ?><?php echo $page ? ' lat-card--page' : ''; ?><?php echo $image ? ' has-img' : ''; ?>" id="eveniment-<?php echo (int) $id; ?>"
 			style="--lat-c:<?php echo esc_attr( $m['cat_color'] ); ?>"
 			data-id="<?php echo (int) $id; ?>"
 			data-date="<?php echo esc_attr( $m['date'] ); ?>"
