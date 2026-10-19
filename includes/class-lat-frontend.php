@@ -356,7 +356,7 @@ class LAT_Frontend {
 					<div>
 						<?php if ( $m['cat_name'] ) : ?><span class="lat-kicker"><?php echo esc_html( $m['cat_name'] ); ?></span><?php endif; ?>
 						<?php if ( $page ) : ?>
-							<h1 class="lat-title"><?php echo esc_html( get_the_title( $id ) ); ?></h1>
+							<?php // The theme already prints the title as H1 on the event page. ?>
 						<?php else : ?>
 							<h4 class="lat-title"><?php if ( $url ) : ?><a href="<?php echo esc_url( $url ); ?>"><?php endif; ?><?php echo esc_html( get_the_title( $id ) ); ?><?php if ( $url ) : ?></a><?php endif; ?></h4>
 						<?php endif; ?>

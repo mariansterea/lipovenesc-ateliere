@@ -1,7 +1,7 @@
 === Lipovenesc Evenimente ===
 Requires at least: 6.0
 Requires PHP: 7.4
-Stable tag: 2.0.0
+Stable tag: 2.0.1
 License: GPLv2 or later
 
 Evenimente în curte cu înscriere online, bilete și plată prin WooCommerce.
@@ -29,7 +29,10 @@ Evenimente în curte cu înscriere online, bilete și plată prin WooCommerce.
 
 == Changelog ==
 
-= 2.0.0 =
+= 2.0.1 =
+* Pagina de eveniment: titlul nu mai apare de două ori (tema îl afișează deja).
+
+= 2.0.1 =
 * Categorii cu reguli, minim participanți, mod Rezervă / Cumpără bilet.
 * Integrare WooCommerce (comandă creată din formular, plată pe pagina WooCommerce, rambursare la anulare).
 * Bilete cu QR, check-in, .ics, pagini de eveniment, schema Event.
