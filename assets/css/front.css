@@ -29,6 +29,10 @@
 	font-family: var(--lat-sans);
 }
 
+#lat-lista {
+	scroll-margin-top: 110px;
+}
+
 .lat-app *,
 .lat-app *::before,
 .lat-app *::after,

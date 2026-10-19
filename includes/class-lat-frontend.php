@@ -91,7 +91,7 @@ class LAT_Frontend {
 			$img   = $c['image_id'] ? wp_get_attachment_image_url( (int) $c['image_id'], 'large' ) : '';
 			$count = count( LAT_Helpers::upcoming_ids( -1, $t->slug ) );
 			$base  = $atts['link'] ? $atts['link'] : ( LAT_Helpers::get( 'list_page' ) ? get_permalink( (int) LAT_Helpers::get( 'list_page' ) ) : '' );
-			$href  = $base ? add_query_arg( 'categorie', $t->slug, $base ) : '#lat-lista';
+			$href  = $base ? add_query_arg( 'categorie', $t->slug, $base ) . '#lat-lista' : '#lat-lista';
 			?>
 			<a class="lat-tile" href="<?php echo esc_url( $href ); ?>" style="--lat-c:<?php echo esc_attr( $c['color'] ); ?>">
 				<?php if ( $img ) : ?>
@@ -167,7 +167,8 @@ class LAT_Frontend {
 
 		ob_start();
 		?>
-		<div class="lat-app"<?php echo self::app_attrs( array( 'data-calendar' => $calendar ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+		<?php static $lat_list_anchor = false; $lat_anchor_attr = $lat_list_anchor ? '' : ' id="lat-lista"'; $lat_list_anchor = true; ?>
+		<div class="lat-app"<?php echo $lat_anchor_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php echo self::app_attrs( array( 'data-calendar' => $calendar ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 			<?php if ( $atts['titlu'] ) : ?>
 				<h2 class="lat-h"><?php echo esc_html( $atts['titlu'] ); ?></h2>
 			<?php endif; ?>
