@@ -22,6 +22,11 @@
 .lat-app {
 	max-width: 980px;
 	margin: 24px auto;
+	font-family: var(--lat-sans);
+}
+
+.lat-tiles {
+	font-family: var(--lat-sans);
 }
 
 .lat-app *,
@@ -769,6 +774,8 @@ picture.lat-img img {
 	flex: 1;
 	padding-top: 8px;
 	border-top: 3px solid var(--lat-line);
+	list-style: none;
+	margin: 0;
 }
 
 .lat-steps li.is-on {

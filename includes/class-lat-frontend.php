@@ -315,7 +315,8 @@ class LAT_Frontend {
 		$left   = LAT_Helpers::places_left( $id );
 		$ts     = strtotime( $m['date'] . ' 12:00' );
 		$post   = get_post( $id );
-		$intro  = has_excerpt( $id ) ? get_the_excerpt( $id ) : wp_trim_words( wp_strip_all_tags( strip_shortcodes( $post->post_content ) ), 32 );
+		// Pe card, rezumatul apare doar dacă e scris explicit (Excerpt); descrierea stă strânsă sub „Detalii”.
+		$intro  = has_excerpt( $id ) ? get_the_excerpt( $id ) : '';
 		$image  = get_the_post_thumbnail_url( $id, $page ? 'large' : 'medium_large' );
 		$url    = LAT_Helpers::ws_url( $id );
 		$buy    = 'buy' === $m['mode_eff'];
