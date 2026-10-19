@@ -8,7 +8,11 @@
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
 delete_option( 'lat_settings' );
+delete_option( 'lat_cats_seeded' );
+delete_option( 'lat_version' );
+delete_option( 'lat_flush_rewrite' );
 wp_clear_scheduled_hook( 'lat_send_reminders' );
+wp_clear_scheduled_hook( 'lat_release_holds' );
 
 foreach ( array( 'lat_workshop', 'lat_registration' ) as $lat_type ) {
 	$lat_ids = get_posts(

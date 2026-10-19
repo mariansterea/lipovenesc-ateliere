@@ -1,56 +1,248 @@
-/* Lipovenesc Ateliere – calendar */
-.lat-app {
-	--lat-accent: #2f5d50;
-	--lat-ink: #1f2328;
-	--lat-muted: #667085;
-	--lat-line: #e4e7ec;
-	--lat-soft: #f6f7f5;
-	max-width: 960px;
-	margin: 24px auto;
+/* Lipovenesc Evenimente – public styles
+   Palette: cream paper, deep green accent, charcoal ink; serif headings, spaced small caps. */
+.lat-app,
+.lat-tiles,
+.lat-tiles-title {
+	--lat-accent: #4f6246;
+	--lat-accent-rgb: 79, 98, 70;
+	--lat-paper: #f3efe6;
+	--lat-ink: #2b2b2b;
+	--lat-muted: #6f6f67;
+	--lat-line: #e4ded1;
+	--lat-card: #fffdf9;
+	--lat-c: var(--lat-accent);
+	--lat-serif: Georgia, "Times New Roman", "Cormorant Garamond", serif;
+	--lat-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	--lat-radius: 14px;
 	color: var(--lat-ink);
 	font-size: 16px;
-	line-height: 1.5;
+	line-height: 1.55;
+}
+
+.lat-app {
+	max-width: 980px;
+	margin: 24px auto;
 }
 
 .lat-app *,
 .lat-app *::before,
-.lat-app *::after {
+.lat-app *::after,
+.lat-tiles *,
+.lat-tiles *::before,
+.lat-tiles *::after {
 	box-sizing: border-box;
 }
 
-.lat-app [hidden] {
+.lat-app [hidden],
+.lat-tiles [hidden] {
 	display: none !important;
 }
 
-.lat-app button {
+.lat-app button,
+.lat-tiles button {
 	font: inherit;
 	text-transform: none;
 	letter-spacing: normal;
 	box-shadow: none;
 }
 
+/* ---------- Type helpers ---------- */
+.lat-kicker,
+.lat-tile-kicker,
+.lat-badge-mon,
+.lat-chip,
+.lat-btn,
+.lat-tag,
+.lat-state,
+.lat-month {
+	font-family: var(--lat-sans);
+	letter-spacing: .14em;
+	text-transform: uppercase;
+	font-weight: 600;
+}
+
+.lat-kicker,
+.lat-tile-kicker {
+	display: block;
+	font-size: 11px;
+	color: var(--lat-c);
+	margin-bottom: 4px;
+}
+
+.lat-h,
+.lat-tiles-title,
+.lat-title,
+.lat-tile-title,
+.lat-next-title {
+	font-family: var(--lat-serif);
+	font-weight: 500;
+	color: var(--lat-ink);
+	margin: 0;
+	line-height: 1.2;
+}
+
+.lat-h,
+.lat-tiles-title {
+	font-size: clamp(26px, 3.2vw, 36px);
+	margin: 0 0 8px;
+}
+
+.lat-tiles-title {
+	text-align: center;
+	margin: 0 0 20px;
+}
+
+.lat-lead {
+	margin: 6px 0 18px;
+	color: var(--lat-muted);
+	max-width: 60ch;
+}
+
+.lat-cat-head {
+	margin-bottom: 18px;
+	padding-left: 16px;
+	border-left: 4px solid var(--lat-c);
+}
+
 .lat-empty {
-	padding: 18px;
-	background: var(--lat-soft);
-	border-radius: 12px;
+	padding: 20px 22px;
+	background: var(--lat-paper);
+	border-radius: var(--lat-radius);
 	color: var(--lat-muted);
 }
 
-/* Top: mini calendar + chips */
+/* ---------- Buttons ---------- */
+.lat-app .lat-btn,
+.lat-tiles .lat-btn {
+	display: inline-block;
+	margin: 0;
+	padding: 13px 20px;
+	border: 1.5px solid var(--lat-accent);
+	border-radius: 6px;
+	background: var(--lat-accent);
+	color: #fff;
+	font-size: 12px;
+	line-height: 1;
+	text-decoration: none;
+	cursor: pointer;
+	transition: background .15s, color .15s, transform .15s;
+}
+
+.lat-app .lat-btn:hover,
+.lat-tiles .lat-btn:hover {
+	background: color-mix(in srgb, var(--lat-accent) 85%, #000);
+	border-color: color-mix(in srgb, var(--lat-accent) 85%, #000);
+	color: #fff;
+	transform: translateY(-1px);
+}
+
+.lat-app .lat-btn--ghost {
+	background: transparent;
+	color: var(--lat-accent);
+}
+
+.lat-app .lat-btn--ghost:hover {
+	background: var(--lat-accent);
+	color: #fff;
+}
+
+.lat-app .lat-btn:disabled {
+	opacity: .55;
+	cursor: default;
+	transform: none;
+}
+
+.lat-app .lat-link {
+	background: none;
+	border: 0;
+	padding: 0;
+	color: var(--lat-accent);
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+/* ---------- Category tiles ---------- */
+.lat-tiles {
+	display: grid;
+	gap: 18px;
+	grid-template-columns: repeat(3, 1fr);
+	margin: 8px 0 32px;
+}
+
+.lat-tiles--1 { grid-template-columns: 1fr; }
+.lat-tiles--2 { grid-template-columns: repeat(2, 1fr); }
+.lat-tiles--4 { grid-template-columns: repeat(4, 1fr); }
+
+.lat-tile {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	min-height: 420px;
+	border-radius: var(--lat-radius);
+	overflow: hidden;
+	background: var(--lat-paper);
+	color: var(--lat-ink);
+	text-decoration: none;
+	box-shadow: 0 1px 0 rgba(0, 0, 0, .04);
+	transition: transform .2s, box-shadow .2s;
+}
+
+.lat-tile:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 14px 30px rgba(0, 0, 0, .10);
+}
+
+.lat-tile-img {
+	display: block;
+	width: 100%;
+	height: 260px;
+	object-fit: cover;
+	flex: none;
+}
+
+.lat-tile-img--empty {
+	background: linear-gradient(160deg, color-mix(in srgb, var(--lat-c) 35%, #fff), color-mix(in srgb, var(--lat-c) 70%, #000));
+}
+
+.lat-tile-body {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 22px 22px 24px;
+	border-top: 4px solid var(--lat-c);
+	flex: 1;
+}
+
+.lat-tile-title {
+	font-size: 26px;
+}
+
+.lat-tile-text {
+	color: var(--lat-muted);
+	font-size: 15px;
+	line-height: 1.5;
+}
+
+.lat-tiles .lat-btn--tile {
+	margin-top: auto;
+}
+
+/* ---------- Top: calendar + chips ---------- */
 .lat-top {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 16px 24px;
 	align-items: flex-start;
-	margin-bottom: 8px;
+	margin-bottom: 10px;
 }
 
 .lat-cal {
-	width: 280px;
-	padding: 12px;
+	width: 290px;
+	padding: 14px;
 	border: 1px solid var(--lat-line);
-	border-radius: 14px;
-	background: #fff;
+	border-radius: var(--lat-radius);
+	background: var(--lat-card);
 }
 
 .lat-cal-head {
@@ -58,6 +250,8 @@
 	align-items: center;
 	justify-content: space-between;
 	margin-bottom: 8px;
+	font-family: var(--lat-serif);
+	font-size: 18px;
 }
 
 .lat-app .lat-cal-nav {
@@ -69,14 +263,13 @@
 	border-radius: 50%;
 	background: transparent;
 	color: var(--lat-ink);
-	font-size: 20px;
+	font-size: 22px;
 	line-height: 1;
 	cursor: pointer;
 }
 
 .lat-app .lat-cal-nav:hover {
-	background: var(--lat-soft);
-	color: var(--lat-ink);
+	background: var(--lat-paper);
 }
 
 .lat-cal-grid {
@@ -85,25 +278,27 @@
 	gap: 2px;
 	text-align: center;
 	font-size: 14px;
+	font-family: var(--lat-sans);
 }
 
 .lat-cal-wd {
 	color: var(--lat-muted);
-	font-size: 12px;
+	font-size: 11px;
+	letter-spacing: .08em;
 	padding: 2px 0;
 }
 
 .lat-cal-day {
 	display: block;
-	padding: 6px 0;
-	color: #b0b6bf;
+	padding: 7px 0;
+	color: #b7b3a8;
 	border-radius: 8px;
 }
 
 .lat-app .lat-cal-day.has-ev {
 	margin: 0;
 	border: 0;
-	background: color-mix(in srgb, var(--lat-accent) 12%, #fff);
+	background: rgba(var(--lat-accent-rgb), .12);
 	color: var(--lat-accent);
 	font-weight: 700;
 	cursor: pointer;
@@ -120,122 +315,183 @@
 	flex-wrap: wrap;
 	gap: 8px;
 	flex: 1;
-	min-width: 220px;
+	min-width: 240px;
+	padding-top: 4px;
 }
 
 .lat-app .lat-chip {
 	margin: 0;
-	padding: 6px 14px;
-	border: 1px solid var(--lat-line);
+	padding: 10px 14px;
+	border: 1.5px solid var(--lat-line);
 	border-radius: 999px;
-	background: #fff;
+	background: var(--lat-card);
 	color: var(--lat-ink);
+	font-size: 11px;
 	cursor: pointer;
 }
 
-.lat-app .lat-chip:hover:not(.is-on) {
-	background: #fff;
-	color: var(--lat-ink);
-	border-color: var(--lat-accent);
+.lat-app .lat-chip::before {
+	content: "";
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--lat-c);
+	margin-right: 8px;
+	vertical-align: 1px;
+}
+
+.lat-app .lat-chip[data-cat=""]::before {
+	display: none;
+}
+
+.lat-app .lat-chip:hover {
+	border-color: var(--lat-c);
 }
 
 .lat-app .lat-chip.is-on {
-	background: var(--lat-accent);
-	border-color: var(--lat-accent);
+	background: var(--lat-ink);
+	border-color: var(--lat-ink);
 	color: #fff;
 }
 
 .lat-filter-note {
-	margin: 16px 0 0;
+	margin: 8px 0 0;
 	color: var(--lat-muted);
 }
 
-.lat-app .lat-link {
-	margin: 0;
-	padding: 0;
-	border: 0;
-	background: none;
-	color: var(--lat-accent);
-	text-decoration: underline;
-	cursor: pointer;
+/* ---------- Month headings ---------- */
+.lat-month {
+	margin: 26px 0 12px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--lat-line);
+	font-size: 12px;
+	color: var(--lat-muted);
 }
 
-/* List */
-.lat-app .lat-month {
-	margin: 28px 0 12px;
-	font-size: 1.3em;
-}
-
+/* ---------- Card ---------- */
 .lat-card {
 	position: relative;
 	display: grid;
-	grid-template-columns: 220px minmax(0, 1fr);
+	grid-template-columns: 84px 220px 1fr;
+	gap: 0 20px;
 	margin: 0 0 16px;
+	padding: 18px 20px 18px 0;
 	border: 1px solid var(--lat-line);
-	border-radius: 16px;
-	background: #fff;
-	overflow: hidden;
+	border-left: 6px solid var(--lat-c);
+	border-radius: var(--lat-radius);
+	background: var(--lat-card);
+	transition: box-shadow .2s;
 }
 
-.lat-card:not(:has(.lat-img)) {
-	grid-template-columns: minmax(0, 1fr);
+.lat-card:hover {
+	box-shadow: 0 10px 28px rgba(0, 0, 0, .07);
 }
 
-.lat-card:not(:has(.lat-img)) .lat-body {
-	padding-left: 92px;
+.lat-card--past,
+.lat-card--cancelled {
+	opacity: .78;
+}
+
+.lat-card--cancelled .lat-title {
+	text-decoration: line-through;
+}
+
+.lat-card-side {
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+}
+
+.lat-badge-date {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 60px;
+	padding: 8px 0 7px;
+	border-radius: 10px;
+	background: var(--lat-paper);
+	line-height: 1;
+	flex: none;
+}
+
+.lat-badge-day {
+	font-family: var(--lat-serif);
+	font-size: 28px;
+	font-weight: 600;
+	color: var(--lat-ink);
+}
+
+.lat-badge-mon {
+	font-size: 10px;
+	color: var(--lat-c);
+	margin-top: 4px;
+}
+
+.lat-badge-time {
+	margin-top: 6px;
+	padding-top: 6px;
+	border-top: 1px solid rgba(0, 0, 0, .08);
+	width: 70%;
+	text-align: center;
+	font-family: var(--lat-sans);
+	font-size: 11px;
+	color: var(--lat-muted);
+}
+
+.lat-img-link {
+	display: block;
 }
 
 .lat-img {
 	display: block;
 	width: 100%;
-	height: 100%;
-	min-height: 200px;
-	margin: 0;
+	height: 150px;
 	object-fit: cover;
-}
-
-.lat-badge-date {
-	position: absolute;
-	top: 12px;
-	left: 12px;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	width: 56px;
-	padding: 6px 0;
-	border-radius: 12px;
-	background: #fff;
-	box-shadow: 0 2px 8px rgba(16, 24, 40, 0.15);
-	line-height: 1.1;
-}
-
-.lat-badge-day {
-	font-size: 22px;
-	font-weight: 800;
-	color: var(--lat-accent);
-}
-
-.lat-badge-mon {
-	font-size: 11px;
-	font-weight: 700;
-	letter-spacing: 0.06em;
-	color: var(--lat-muted);
+	border-radius: 10px;
 }
 
 .lat-body {
-	padding: 18px 20px;
+	min-width: 0;
 }
 
-.lat-app .lat-title {
-	margin: 0 0 4px;
-	font-size: 1.2em;
-	line-height: 1.25;
+.lat-card.no-img .lat-body {
+	grid-column: 2 / -1;
+}
+
+.lat-head {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	align-items: flex-start;
+}
+
+.lat-title {
+	font-size: 22px;
+}
+
+.lat-title a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.lat-title a:hover {
+	color: var(--lat-accent);
+}
+
+.lat-price {
+	flex: none;
+	font-family: var(--lat-serif);
+	font-size: 19px;
+	color: var(--lat-accent);
+	white-space: nowrap;
+	padding-top: 2px;
 }
 
 .lat-when {
-	margin: 0 0 8px;
+	margin: 4px 0 8px;
 	color: var(--lat-muted);
-	font-size: 0.92em;
+	font-size: 15px;
 }
 
 .lat-intro {
@@ -245,21 +501,47 @@
 .lat-tags {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px;
-	margin: 0 0 10px;
+	gap: 8px;
+	margin: 0 0 12px;
+	align-items: center;
 }
 
-.lat-tag {
-	padding: 2px 10px;
+.lat-tag,
+.lat-state {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	padding: 6px 10px;
 	border-radius: 999px;
-	background: var(--lat-soft);
-	font-size: 0.85em;
+	font-size: 10px;
+	background: var(--lat-paper);
+	color: var(--lat-ink);
 }
 
-.lat-tag--price {
-	background: color-mix(in srgb, var(--lat-accent) 12%, #fff);
-	color: var(--lat-accent);
-	font-weight: 700;
+.lat-tag--min {
+	background: #fff4e0;
+	color: #7a4b00;
+}
+
+.lat-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #1a7f37;
+	flex: none;
+}
+
+.lat-state--full .lat-dot,
+.lat-state--closed .lat-dot,
+.lat-state--past .lat-dot,
+.lat-state--cancelled .lat-dot {
+	background: #b32d2e;
+}
+
+.lat-card[data-left="1"] .lat-dot,
+.lat-card[data-left="2"] .lat-dot,
+.lat-card[data-left="3"] .lat-dot {
+	background: #d98a00;
 }
 
 .lat-details {
@@ -269,173 +551,323 @@
 .lat-details summary {
 	cursor: pointer;
 	color: var(--lat-accent);
+	font-family: var(--lat-sans);
+	font-size: 13px;
+	letter-spacing: .06em;
+	text-transform: uppercase;
 	font-weight: 600;
 }
 
-.lat-content > :last-child {
+.lat-content {
+	margin-top: 8px;
+}
+
+.lat-content p:last-child {
 	margin-bottom: 0;
+}
+
+.lat-bring {
+	margin: 8px 0 0;
+	font-size: 15px;
 }
 
 .lat-foot {
 	display: flex;
-	flex-wrap: wrap;
-	gap: 12px;
 	align-items: center;
 	justify-content: space-between;
+	gap: 16px;
+	flex-wrap: wrap;
+	margin-top: 6px;
 }
 
 .lat-places {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
+	flex: 1;
 	min-width: 160px;
-	font-size: 0.9em;
-	font-weight: 600;
 }
 
 .lat-bar {
 	display: block;
-	height: 6px;
+	height: 5px;
 	border-radius: 3px;
-	background: var(--lat-soft);
+	background: var(--lat-paper);
 	overflow: hidden;
 }
 
 .lat-bar span {
 	display: block;
 	height: 100%;
-	background: var(--lat-accent);
+	background: var(--lat-c);
+	transition: width .4s;
 }
 
-.lat-card--full .lat-places,
-.lat-card--closed .lat-places {
-	color: #8a1f1f;
+.lat-places-note {
+	display: block;
+	margin-top: 5px;
+	font-family: var(--lat-sans);
+	font-size: 12px;
+	color: var(--lat-muted);
 }
 
-.lat-app .lat-btn {
-	margin: 0;
-	padding: 10px 20px;
-	border: 0;
-	border-radius: 10px;
-	background: var(--lat-accent);
-	color: #fff;
-	font-weight: 700;
-	cursor: pointer;
+.lat-share {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 14px;
+	align-items: center;
+	margin: 18px 0 0;
+	padding-top: 14px;
+	border-top: 1px solid var(--lat-line);
+	font-family: var(--lat-sans);
+	font-size: 13px;
+	color: var(--lat-muted);
 }
 
-.lat-app .lat-btn:hover,
-.lat-app .lat-btn:focus {
-	background: var(--lat-accent);
-	color: #fff;
-	filter: brightness(1.08);
-}
-
-.lat-app .lat-btn:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
-}
-
-.lat-card--full .lat-open {
-	background: #fff;
+.lat-share a,
+.lat-app .lat-copy {
 	color: var(--lat-accent);
-	box-shadow: inset 0 0 0 2px var(--lat-accent);
+	text-decoration: none;
+	background: none;
+	border: 0;
+	padding: 0;
+	cursor: pointer;
+	font: inherit;
 }
 
-.lat-app button:focus-visible {
-	outline: 3px solid var(--lat-accent);
-	outline-offset: 2px;
+.lat-share a:hover,
+.lat-app .lat-copy:hover {
+	text-decoration: underline;
 }
 
-/* Form */
+/* Event page */
+.lat-card--page {
+	grid-template-columns: 84px 1fr;
+	padding-bottom: 24px;
+}
+
+.lat-card--page .lat-img {
+	grid-column: 1 / -1;
+	height: clamp(220px, 42vw, 440px);
+	border-radius: 0 10px 10px 0;
+	margin: -18px 0 18px -6px;
+}
+
+.lat-card--page .lat-title {
+	font-size: clamp(26px, 3.4vw, 38px);
+}
+
+.lat-card--page .lat-content {
+	margin: 14px 0 6px;
+	font-size: 17px;
+}
+
+/* Compact "next events" */
+.lat-next {
+	display: grid;
+	gap: 12px;
+}
+
+.lat-next-item {
+	display: flex;
+	gap: 16px;
+	align-items: center;
+	padding: 12px 16px 12px 12px;
+	border: 1px solid var(--lat-line);
+	border-left: 5px solid var(--lat-c);
+	border-radius: 12px;
+	background: var(--lat-card);
+	color: var(--lat-ink);
+	text-decoration: none;
+	transition: box-shadow .2s, transform .2s;
+}
+
+.lat-next-item:hover {
+	box-shadow: 0 8px 22px rgba(0, 0, 0, .07);
+	transform: translateY(-1px);
+}
+
+.lat-next-item .lat-badge-date {
+	width: 54px;
+	padding: 6px 0;
+}
+
+.lat-next-item .lat-badge-day {
+	font-size: 24px;
+}
+
+.lat-next-body {
+	min-width: 0;
+}
+
+.lat-next-title {
+	display: block;
+	font-size: 19px;
+}
+
+.lat-next-meta {
+	display: block;
+	font-family: var(--lat-sans);
+	font-size: 13px;
+	color: var(--lat-muted);
+	margin-top: 2px;
+}
+
+.lat-more {
+	margin: 16px 0 0;
+}
+
+/* ---------- Sign-up form (step by step) ---------- */
 .lat-form {
 	margin-top: 16px;
-	padding-top: 16px;
-	border-top: 1px solid var(--lat-line);
+	padding: 18px 20px 20px;
+	border-radius: 12px;
+	background: var(--lat-paper);
+}
+
+.lat-steps {
+	display: flex;
+	gap: 6px;
+	margin: 0 0 14px;
+	padding: 0;
+	list-style: none;
+	font-family: var(--lat-sans);
+	font-size: 11px;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: var(--lat-muted);
+}
+
+.lat-steps li {
+	flex: 1;
+	padding-top: 8px;
+	border-top: 3px solid var(--lat-line);
+}
+
+.lat-steps li.is-on {
+	border-top-color: var(--lat-accent);
+	color: var(--lat-accent);
+}
+
+.lat-steps li.is-done {
+	border-top-color: var(--lat-ink);
+}
+
+.lat-step {
+	display: block;
+}
+
+.lat-step[hidden] {
+	display: none;
+}
+
+.lat-step-title {
+	font-family: var(--lat-serif);
+	font-size: 20px;
+	margin: 0 0 12px;
 }
 
 .lat-steppers {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 12px 24px;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 12px;
 	margin-bottom: 12px;
 }
 
 .lat-stepper {
-	display: flex;
+	display: grid;
+	grid-template-columns: 1fr 44px 56px 44px;
 	align-items: center;
 	gap: 6px;
+	padding: 10px 12px;
+	border-radius: 10px;
+	background: var(--lat-card);
+	border: 1px solid var(--lat-line);
 }
 
 .lat-stepper-label {
-	min-width: 56px;
-	font-weight: 600;
+	font-family: var(--lat-sans);
+	font-size: 14px;
+}
+
+.lat-stepper-label small {
+	display: block;
+	color: var(--lat-muted);
+	font-size: 12px;
 }
 
 .lat-app .lat-stepper button {
-	width: 36px;
-	height: 36px;
 	margin: 0;
-	padding: 0;
-	border: 1px solid var(--lat-line);
-	border-radius: 50%;
-	background: #fff;
-	color: var(--lat-ink);
-	font-size: 18px;
+	height: 40px;
+	border: 1.5px solid var(--lat-accent);
+	border-radius: 8px;
+	background: transparent;
+	color: var(--lat-accent);
+	font-size: 20px;
 	line-height: 1;
 	cursor: pointer;
 }
 
+.lat-app .lat-stepper button:hover {
+	background: var(--lat-accent);
+	color: #fff;
+}
+
 .lat-app .lat-stepper input {
-	width: 52px;
+	height: 40px;
 	margin: 0;
-	padding: 6px;
-	border: 1px solid #cfd4dc;
-	border-radius: 8px;
+	padding: 0;
+	border: 0;
+	background: transparent;
 	text-align: center;
-	font: inherit;
+	font-family: var(--lat-serif);
+	font-size: 22px;
+	color: var(--lat-ink);
+	-moz-appearance: textfield;
+}
+
+.lat-app .lat-stepper input::-webkit-inner-spin-button {
+	-webkit-appearance: none;
 }
 
 .lat-grid {
 	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 0 12px;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 12px;
 }
 
 .lat-field {
-	display: block;
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
 	margin: 0 0 12px;
-}
-
-.lat-field > span {
-	display: block;
-	margin-bottom: 4px;
-	font-size: 0.9em;
-	font-weight: 600;
+	font-family: var(--lat-sans);
+	font-size: 12px;
+	letter-spacing: .06em;
+	text-transform: uppercase;
+	color: var(--lat-muted);
 }
 
 .lat-app .lat-field input,
 .lat-app .lat-field textarea {
-	display: block;
 	width: 100%;
 	margin: 0;
-	padding: 10px 12px;
-	border: 1px solid #cfd4dc;
+	padding: 12px 12px;
+	border: 1px solid var(--lat-line);
 	border-radius: 8px;
-	background: #fff;
+	background: var(--lat-card);
 	color: var(--lat-ink);
-	font: inherit;
+	font: 16px/1.4 var(--lat-sans);
+	letter-spacing: normal;
+	text-transform: none;
 }
 
 .lat-app .lat-field input:focus,
-.lat-app .lat-field textarea:focus,
-.lat-app .lat-stepper input:focus {
-	outline: 2px solid var(--lat-accent);
-	outline-offset: 1px;
+.lat-app .lat-field textarea:focus {
+	outline: 2px solid rgba(var(--lat-accent-rgb), .35);
+	border-color: var(--lat-accent);
 }
 
 .lat-hp {
-	position: absolute !important;
-	left: -9999px !important;
+	position: absolute;
+	left: -9999px;
 	width: 1px;
 	height: 1px;
 	overflow: hidden;
@@ -445,76 +877,239 @@
 	display: flex;
 	gap: 10px;
 	align-items: flex-start;
-	margin: 4px 0 12px;
-	font-size: 0.9em;
+	margin: 6px 0 12px;
+	font-size: 14px;
+	color: var(--lat-muted);
 }
 
 .lat-consent input {
-	margin-top: 4px;
-	accent-color: var(--lat-accent);
+	margin: 4px 0 0;
+}
+
+.lat-summary {
+	margin: 0 0 12px;
+	padding: 14px 16px;
+	border-radius: 10px;
+	background: var(--lat-card);
+	border: 1px solid var(--lat-line);
+}
+
+.lat-summary dl {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 6px 14px;
+	margin: 0;
+}
+
+.lat-summary dt {
+	font-family: var(--lat-sans);
+	font-size: 11px;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: var(--lat-muted);
+	padding-top: 3px;
+}
+
+.lat-summary dd {
+	margin: 0;
 }
 
 .lat-total {
-	margin: 0 0 12px;
-	font-weight: 700;
+	margin: 0 0 10px;
+	font-family: var(--lat-serif);
+	font-size: 20px;
+}
+
+.lat-total small {
+	font-family: var(--lat-sans);
+	font-size: 13px;
+	color: var(--lat-muted);
+	margin-left: 6px;
 }
 
 .lat-wait {
-	margin: 0 0 12px;
-	padding: 10px 14px;
+	margin: 0 0 10px;
+	padding: 10px 12px;
 	border-radius: 8px;
-	background: #fcf3e3;
-	color: #6b4a00;
+	background: #fff4e0;
+	color: #7a4b00;
+	font-size: 14px;
 }
 
 .lat-error {
-	margin: 0 0 12px;
-	padding: 10px 14px;
+	margin: 0 0 10px;
+	padding: 10px 12px;
 	border-radius: 8px;
-	background: #fdecec;
+	background: #fbe9e7;
 	color: #8a1f1f;
+	font-size: 14px;
+}
+
+.lat-nav {
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+	flex-wrap: wrap;
+	margin-top: 6px;
+}
+
+.lat-secure {
+	margin: 10px 0 0;
+	font-family: var(--lat-sans);
+	font-size: 12px;
+	color: var(--lat-muted);
 }
 
 .lat-success {
 	margin-top: 16px;
-	padding: 14px 16px;
-	border-radius: 10px;
-	background: color-mix(in srgb, var(--lat-accent) 10%, #fff);
+	padding: 18px 20px;
+	border-radius: 12px;
+	background: rgba(var(--lat-accent-rgb), .10);
+	border: 1px solid rgba(var(--lat-accent-rgb), .25);
+}
+
+.lat-success strong {
+	display: block;
+	font-family: var(--lat-serif);
+	font-weight: 500;
+	font-size: 22px;
+	margin-bottom: 6px;
 }
 
 .lat-success p {
-	margin: 4px 0 0;
+	margin: 4px 0;
+}
+
+.lat-success .lat-btn {
+	margin-top: 10px;
 }
 
 .lat-muted {
 	color: var(--lat-muted);
-	font-size: 0.9em;
 }
 
-@media (max-width: 720px) {
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+	.lat-tiles,
+	.lat-tiles--4 {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.lat-card {
+		grid-template-columns: 76px 1fr;
+		padding-right: 16px;
+	}
+
+	.lat-img-link,
+	.lat-img {
+		grid-column: 1 / -1;
+	}
+
+	.lat-card .lat-img {
+		height: 190px;
+		margin: 0 0 14px -6px;
+		border-radius: 0 10px 10px 0;
+	}
+
+	.lat-card-side {
+		order: 2;
+		grid-column: 1;
+	}
+
+	.lat-body {
+		order: 3;
+		grid-column: 2;
+	}
+
+	.lat-card--page .lat-img {
+		margin-top: -18px;
+	}
+}
+
+@media (max-width: 600px) {
+	.lat-app {
+		font-size: 15px;
+	}
+
+	.lat-tiles,
+	.lat-tiles--2,
+	.lat-tiles--4 {
+		grid-template-columns: 1fr;
+		gap: 14px;
+	}
+
+	.lat-tile {
+		min-height: 0;
+	}
+
+	.lat-tile-img {
+		height: 210px;
+	}
+
+	.lat-top {
+		gap: 12px;
+	}
+
 	.lat-cal {
 		width: 100%;
 	}
 
 	.lat-card {
-		grid-template-columns: 1fr;
+		grid-template-columns: 64px 1fr;
+		gap: 0 12px;
+		padding: 14px 14px 14px 0;
 	}
 
-	.lat-img {
-		min-height: 160px;
-		max-height: 220px;
+	.lat-badge-date {
+		width: 52px;
 	}
 
-	.lat-card:not(:has(.lat-img)) .lat-body {
-		padding-left: 20px;
-		padding-top: 80px;
+	.lat-badge-day {
+		font-size: 24px;
 	}
 
-	.lat-grid {
-		grid-template-columns: 1fr;
+	.lat-badge-time {
+		display: none;
 	}
 
-	.lat-app .lat-btn {
-		width: 100%;
+	.lat-title {
+		font-size: 20px;
+	}
+
+	.lat-head {
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.lat-price {
+		font-size: 17px;
+	}
+
+	.lat-foot {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.lat-app .lat-foot .lat-btn {
+		text-align: center;
+	}
+
+	.lat-form {
+		padding: 14px;
+	}
+
+	.lat-stepper {
+		grid-template-columns: 1fr 44px 52px 44px;
+	}
+
+	.lat-steps li span {
+		display: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.lat-app *,
+	.lat-tiles * {
+		transition: none !important;
 	}
 }

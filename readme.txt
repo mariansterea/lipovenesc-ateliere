@@ -1,27 +1,40 @@
-=== Lipovenesc Ateliere ===
+=== Lipovenesc Evenimente ===
 Requires at least: 6.0
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 2.0.0
 License: GPLv2 or later
 
-Calendar de ateliere de sezon cu înscriere online.
+Evenimente în curte cu înscriere online, bilete și plată prin WooCommerce.
 
 == Ce face ==
 
-* Ateliere cu imagine, descriere, dată, oră, locație, vârstă recomandată și „ce să aduceți”.
-* Locuri limitate: se numără toți participanții sau doar copiii.
-* Preț pe adult și pe copil, total calculat automat (plata la fața locului).
-* Pagina de calendar: mini-calendar pe lună, filtre pe categorii (ex. Toamnă, Animale), carduri pe luni, locuri rămase în timp real.
-* Formular de înscriere direct în card: adulți, copii, vârste, date de contact, acord GDPR.
-* Listă de așteptare: când se eliberează locuri, următorii sunt confirmați automat și primesc email.
-* Emailuri: confirmare (cu „Adaugă în calendar” și link de anulare), notificare către voi, reamintire cu o zi înainte.
-* Participantul își poate anula singur înscrierea.
-* Lista participanților gata de printat (cu coloană „Prezent”) și export Excel (CSV).
-* Înscrieri telefonice adăugate manual; „Duplică” pentru același atelier la altă dată.
+* Categorii cu reguli proprii (Ateliere, Gastronomie, Concerte și seri în curte, sau oricare altele): minim și maxim participanți, preț adult/copil, mod de rezervare, culoare, imagine, descriere. Evenimentele moștenesc regulile și le pot suprascrie.
+* Două moduri: „Rezervă” (locul se ține, plata la fermă sau gratuit) și „Cumpără bilet” (plata online prin WooCommerce, cu Stripe sau orice alt procesator instalat). Pluginul nu atinge datele de card.
+* Minim participanți: „se confirmă la X înscriși” pe card; alertă pe email cu N ore înainte dacă minimul nu e atins; anularea evenimentului cu un click trimite emailuri și rambursează plățile online.
+* Bilete cu cod QR și cod scurt, pagină de bilet pe telefon (printabilă), fișier .ics, link de anulare.
+* Check-in: scanarea QR-ului cu telefonul (logat în site) bifează prezența; listă de check-in în admin, cu căutare după nume sau cod.
+* Listă de așteptare cu promovare automată; la evenimentele cu bilet, cel promovat primește 24 h și un link de plată.
+* Locuri ținute până la plată (implicit 30 de minute), eliberate automat dacă plata nu se face.
+* Pagină proprie pentru fiecare eveniment (/eveniment/nume/), cu date structurate Event (JSON-LD) și butoane de distribuire.
+* Shortcode-uri: [lipovenesc_categorii], [lipovenesc_evenimente], [lipovenesc_evenimente categorie="ateliere"], [lipovenesc_evenimente layout="urmatoarele" limit="3"], [lipovenesc_evenimente layout="arhiva"], [lipovenesc_eveniment id="123"].
+* Emailuri: confirmare cu bilet, plată în așteptare, listă de așteptare, promovare, anulare, eveniment anulat, reamintire cu o zi înainte, alertă sub minim.
+* Lista participanților printabilă, export CSV, înscrieri adăugate manual (telefonic).
 
-== Instalare ==
+== Instalare / actualizare ==
 
-1. Module → Adaugă modul → Încarcă modul → lipovenesc-ateliere.zip → Activează.
-2. Ateliere → Setări: emailuri de notificare, telefon, informații utile.
-3. Ateliere → Categorii (opțional), apoi Ateliere → Adaugă atelier.
-4. Puneți [lipovenesc_ateliere] într-o pagină.
+1. Pluginuri → Adaugă nou → Încarcă plugin → alegeți arhiva → „Înlocuiește versiunea curentă cu cea încărcată”.
+2. Evenimente → Setări: emailurile de notificare, telefonul, culorile, pagina cu lista.
+3. Evenimente → Categorii: verificați cele 3 categorii create automat (reguli, imagini).
+4. Puneți [lipovenesc_categorii] și [lipovenesc_evenimente] pe pagina Evenimente în curte.
+
+== Changelog ==
+
+= 2.0.0 =
+* Categorii cu reguli, minim participanți, mod Rezervă / Cumpără bilet.
+* Integrare WooCommerce (comandă creată din formular, plată pe pagina WooCommerce, rambursare la anulare).
+* Bilete cu QR, check-in, .ics, pagini de eveniment, schema Event.
+* Formular în 3 pași, design nou (crem / verde), shortcode-uri pentru embed.
+* Duplicare la mai multe date, anularea unui eveniment cu un click.
+
+= 1.0.0 =
+* Prima versiune: calendar de ateliere cu înscriere.
