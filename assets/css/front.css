@@ -961,6 +961,19 @@ picture.lat-img img {
 	overflow-wrap: anywhere;
 }
 
+.lat-app .lat-form input.is-invalid,
+.lat-app .lat-form textarea.is-invalid {
+	border-color: #c0392b !important;
+	box-shadow: 0 0 0 2px rgba(192, 57, 43, .18) !important;
+	background: #fffafa;
+}
+
+.lat-steppers.is-invalid {
+	border-radius: 10px;
+	outline: 1.5px solid #c0392b;
+	outline-offset: 4px;
+}
+
 .lat-consent.is-invalid {
 	padding: 8px 10px;
 	border-radius: 8px;

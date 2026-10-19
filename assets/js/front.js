@@ -331,10 +331,10 @@
 				var c = counts();
 				ages.hidden = c.children < 1;
 				var left = parseInt(card.getAttribute('data-left'), 10) || 0;
-				if (paid) {
+				if (paid && c.adults + c.children > 0) {
 					var t = amount();
 					total.innerHTML = '';
-					total.appendChild(document.createTextNode('Total: ' + (t > 0 ? money(t) : (card.getAttribute('data-free') === '1' ? 'gratuit' : 'preț anunțat în curând'))));
+					total.appendChild(document.createTextNode('Total: ' + (t > 0 ? money(t) : 'gratuit')));
 					total.appendChild(h('small', { text: buy ? 'plată online' : 'plata la fermă' }));
 					total.hidden = false;
 				} else {
@@ -350,6 +350,15 @@
 				form.setAttribute('data-wait', w ? '1' : '');
 			}
 			form.addEventListener('input', refresh);
+			// Câmpul corectat își pierde marcajul roșu, iar mesajul dispare.
+			form.addEventListener('input', function (e) {
+				var f = e.target.closest ? e.target.closest('.is-invalid') : null;
+				if (f) { f.classList.remove('is-invalid'); err.hidden = true; }
+			});
+			form.addEventListener('click', function (e) {
+				var st = e.target.closest ? e.target.closest('.lat-steppers.is-invalid') : null;
+				if (st) { st.classList.remove('is-invalid'); err.hidden = true; }
+			});
 			form.addEventListener('change', function (e) {
 				if (e.target.name === 'consent' && e.target.checked) {
 					err.hidden = true;
@@ -360,9 +369,9 @@
 
 			function validPeople() {
 				var c = counts();
-				if (c.adults + c.children < 1) return fail('Alegeți câte persoane vin.'), false;
+				if (c.adults + c.children < 1) return fail('Alegeți câte persoane vin.', form.querySelector('.lat-steppers')), false;
 				if (c.adults + c.children > max) return fail('Pe o înscriere pot fi maximum ' + max + ' persoane. Pentru grupuri mai mari, sunați-ne.'), false;
-				if (onlyKids && c.children < 1) return fail('Evenimentul este pentru copii: adăugați cel puțin un copil.'), false;
+				if (onlyKids && c.children < 1) return fail('Evenimentul este pentru copii: adăugați cel puțin un copil.', form.querySelector('.lat-steppers')), false;
 				if (waiting() && !waitlistOn) return fail('Nu mai sunt suficiente locuri.'), false;
 				return true;
 			}
@@ -371,9 +380,9 @@
 				var name = el.namedItem('name').value.trim();
 				var phone = el.namedItem('phone').value.trim();
 				var email = el.namedItem('email').value.trim();
-				if (name.length < 3) return fail('Scrieți numele complet.'), false;
-				if (phone.replace(/\D/g, '').length < 9) return fail('Numărul de telefon nu pare corect.'), false;
-				if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail('Adresa de email nu pare corectă.'), false;
+				if (name.length < 3) return fail('Scrieți numele complet.', el.namedItem('name')), false;
+				if (phone.replace(/\D/g, '').length < 9) return fail('Numărul de telefon nu pare corect.', el.namedItem('phone')), false;
+				if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail('Adresa de email nu pare corectă.', el.namedItem('email')), false;
 				return true;
 			}
 

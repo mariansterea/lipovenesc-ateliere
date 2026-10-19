@@ -33,6 +33,8 @@ Evenimente în curte cu înscriere online, bilete și plată prin WooCommerce.
 * Formular: mesajul de eroare apare în pasul curent, deasupra butoanelor; acordul GDPR nebifat se evidențiază cu roșu.
 * Rezumatul de la pasul 3 nu mai iese din cadru pe telefon (etichetă deasupra valorii, emailurile lungi se rup).
 * Titlurile pașilor nu mai preiau culoarea temei.
+* Numele, telefonul, emailul și numărul de persoane se evidențiază cu roșu când lipsesc sau sunt greșite; marcajul dispare la corectare.
+* Totalul nu se mai afișează cât timp nu e aleasă nicio persoană.
 
 = 2.2.1 =
 * Pe telefon și tabletă, fiecare card din listă are o miniatură pătrată în dreapta titlului.
