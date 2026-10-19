@@ -21,6 +21,7 @@ class LAT_Updater {
 		add_filter( 'upgrader_source_selection', array( __CLASS__, 'fix_folder' ), 10, 4 );
 		add_filter( 'plugin_action_links_' . plugin_basename( LAT_FILE ), array( __CLASS__, 'action_links' ) );
 		add_action( 'admin_init', array( __CLASS__, 'force_check' ) );
+		add_action( 'admin_notices', array( __CLASS__, 'notice' ) );
 	}
 
 	/**
@@ -221,15 +222,41 @@ class LAT_Updater {
 		return $links;
 	}
 
+	/**
+	 * Mesaj după „Verifică update”, ca să se vadă că verificarea a avut loc.
+	 */
+	public static function notice() {
+		if ( empty( $_GET['lat_upd'] ) || ! current_user_can( 'update_plugins' ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return;
+		}
+		$res = sanitize_key( wp_unslash( $_GET['lat_upd'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$v   = isset( $_GET['lat_v'] ) ? sanitize_text_field( wp_unslash( $_GET['lat_v'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( 'new' === $res ) {
+			printf( '<div class="notice notice-warning is-dismissible"><p><strong>Lipovenesc Evenimente:</strong> versiunea %s e disponibilă pe GitHub. Apăsați „Actualizează acum” sub plugin.</p></div>', esc_html( $v ) );
+		} elseif ( 'ok' === $res ) {
+			printf( '<div class="notice notice-success is-dismissible"><p><strong>Lipovenesc Evenimente:</strong> aveți ultima versiune (%s).</p></div>', esc_html( LAT_VERSION ) );
+		} else {
+			echo '<div class="notice notice-error is-dismissible"><p><strong>Lipovenesc Evenimente:</strong> nu am putut verifica GitHub acum. Încercați din nou peste câteva minute.</p></div>';
+		}
+	}
+
 	public static function force_check() {
 		if ( empty( $_GET['lat_check_update'] ) || ! current_user_can( 'update_plugins' ) ) {
 			return;
 		}
 		check_admin_referer( 'lat_check_update' );
 		delete_site_transient( self::TRANSIENT );
-		self::release( true );
+		$r = self::release( true );
 		delete_site_transient( 'update_plugins' );
-		wp_safe_redirect( admin_url( 'plugins.php' ) );
+		wp_update_plugins();
+		if ( empty( $r['version'] ) ) {
+			$res = 'err';
+		} elseif ( version_compare( $r['version'], LAT_VERSION, '>' ) ) {
+			$res = 'new';
+		} else {
+			$res = 'ok';
+		}
+		wp_safe_redirect( add_query_arg( array( 'lat_upd' => $res, 'lat_v' => rawurlencode( isset( $r['version'] ) ? $r['version'] : '' ) ), admin_url( 'plugins.php' ) ) );
 		exit;
 	}
 }

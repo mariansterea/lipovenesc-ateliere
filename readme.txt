@@ -1,7 +1,7 @@
 === Lipovenesc Evenimente ===
 Requires at least: 6.0
 Requires PHP: 7.4
-Stable tag: 2.3.1
+Stable tag: 2.3.2
 License: GPLv2 or later
 
 Evenimente în curte cu înscriere online, bilete și plată prin WooCommerce.
@@ -28,6 +28,9 @@ Evenimente în curte cu înscriere online, bilete și plată prin WooCommerce.
 4. Puneți [lipovenesc_categorii] și [lipovenesc_evenimente] pe pagina Evenimente în curte.
 
 == Changelog ==
+
+= 2.3.2 =
+* „Verifică update” afișează un mesaj: versiune nouă disponibilă, ultima versiune sau eroare de conexiune.
 
 = 2.3.1 =
 * Verificarea de update citește versiunea direct de pe ramura main din GitHub (nu mai e nevoie de release sau tag).
