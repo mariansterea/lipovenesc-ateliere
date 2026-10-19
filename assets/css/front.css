@@ -665,6 +665,21 @@ picture.lat-img img {
 	margin: -18px 0 18px -6px;
 }
 
+.lat-card--page .lat-img,
+.lat-card--page .lat-img-link {
+	order: 1;
+}
+
+.lat-card--page .lat-card-side {
+	order: 2;
+	grid-column: 1;
+}
+
+.lat-card--page .lat-body {
+	order: 3;
+	grid-column: 2;
+}
+
 .lat-card--page .lat-title {
 	font-size: clamp(26px, 3.4vw, 38px);
 }
