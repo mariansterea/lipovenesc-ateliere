@@ -39,7 +39,7 @@
 	$(toggleFree);
 
 	$(document).on('change', '.lat-inherit-price', function () {
-		$(this).closest('td').find('.lat-price-own').prop('hidden', this.checked);
+		$(this).closest('td, .latd-price').find('.lat-price-own').prop('hidden', this.checked);
 	});
 
 	// After a category is added via AJAX, reset our custom fields too.

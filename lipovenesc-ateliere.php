@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Lipovenesc Evenimente
  * Description:       Evenimente în curte cu înscriere online: categorii cu reguli proprii (minim și maxim participanți, prețuri adult/copil), rezervare sau bilete plătite prin WooCommerce, bilete cu cod QR și check-in, listă de așteptare, confirmări și reamintiri pe email, pagini proprii de eveniment cu date structurate, shortcode-uri pentru embed în articole.
- * Version:           2.3.2
+ * Version:           2.4.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Daniela & Marian Sterea
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'LAT_VERSION', '2.3.2' );
+define( 'LAT_VERSION', '2.4.0' );
 define( 'LAT_FILE', __FILE__ );
 define( 'LAT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LAT_URL', plugin_dir_url( __FILE__ ) );
@@ -33,7 +33,7 @@ require_once LAT_DIR . 'includes/class-lat-woo.php';
 require_once LAT_DIR . 'includes/class-lat-settings.php';
 require_once LAT_DIR . 'includes/class-lat-participants.php';
 require_once LAT_DIR . 'includes/class-lat-updater.php';
-require_once LAT_DIR . 'includes/class-lat-updater.php';
+require_once LAT_DIR . 'includes/class-lat-dashboard.php';
 
 register_activation_hook(
 	__FILE__,
@@ -63,6 +63,7 @@ add_action(
 		LAT_Settings::init();
 		LAT_Participants::init();
 		LAT_Updater::init();
+		LAT_Dashboard::init();
 	}
 );
 

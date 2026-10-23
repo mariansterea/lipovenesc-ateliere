@@ -23,6 +23,7 @@ class LAT_Workshops {
 		add_action( 'admin_post_lat_duplicate', array( __CLASS__, 'duplicate' ) );
 		add_action( 'admin_post_lat_cancel_event', array( __CLASS__, 'cancel_event' ) );
 		add_filter( 'enter_title_here', array( __CLASS__, 'title_placeholder' ), 10, 2 );
+		add_action( 'edit_form_after_title', array( __CLASS__, 'after_title' ) );
 	}
 
 	public static function register() {
@@ -96,9 +97,22 @@ class LAT_Workshops {
 	}
 
 	public static function meta_boxes() {
-		add_meta_box( 'lat_details', 'Data, locuri și preț', array( __CLASS__, 'box' ), LAT_Helpers::CPT_WS, 'normal', 'high' );
-		add_meta_box( 'lat_status', 'Înscrieri', array( __CLASS__, 'box_status' ), LAT_Helpers::CPT_WS, 'side', 'high' );
+		// Detaliile stau imediat sub titlu (vezi after_title), nu sub editor.
+		$scr = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		$ctx = ( $scr && method_exists( $scr, 'is_block_editor' ) && $scr->is_block_editor() ) ? 'normal' : 'lat_top';
+		add_meta_box( 'lat_details', 'Detaliile evenimentului', array( __CLASS__, 'box' ), LAT_Helpers::CPT_WS, $ctx, 'high' );
+		add_meta_box( 'lat_status', 'Înscrieri', array( __CLASS__, 'box_status' ), LAT_Helpers::CPT_WS, 'side', 'default' );
 		add_meta_box( 'lat_embed', 'Promovare și embed', array( __CLASS__, 'box_embed' ), LAT_Helpers::CPT_WS, 'side', 'default' );
+		// Categoria se alege din cardurile din „Detaliile evenimentului”.
+		remove_meta_box( LAT_Helpers::TAX . 'div', LAT_Helpers::CPT_WS, 'side' );
+	}
+
+	public static function after_title( $post ) {
+		if ( LAT_Helpers::CPT_WS !== $post->post_type ) {
+			return;
+		}
+		do_meta_boxes( get_current_screen(), 'lat_top', $post );
+		echo '<h2 class="latd-desc-h">Descrierea evenimentului <small>apare pe pagina evenimentului; poza se pune din „Imaginea evenimentului”, în dreapta</small></h2>';
 	}
 
 	public static function box( $post ) {
@@ -107,85 +121,86 @@ class LAT_Workshops {
 		$cat = $eff['cat'];
 		$c   = $cat ? LAT_Helpers::cat_meta( $cat->term_id ) : LAT_Helpers::cat_defaults();
 		wp_nonce_field( 'lat_ws_save', 'lat_ws_nonce' );
-		$cat_note = $cat ? 'din categoria „' . esc_html( $cat->name ) . '”' : 'din setările implicite (alegeți o categorie în dreapta)';
+		$cats = LAT_Helpers::categories();
 		?>
-		<table class="form-table lat-form">
-			<tr>
-				<th>Data și ora</th>
-				<td><input type="date" name="lat[date]" value="<?php echo esc_attr( $m['date'] ); ?>" required>
-					de la <input type="time" name="lat[start]" value="<?php echo esc_attr( $m['start'] ); ?>">
-					până la <input type="time" name="lat[end]" value="<?php echo esc_attr( $m['end'] ); ?>">
-					<p class="description">Același eveniment la mai multe date: după salvare, folosiți „Duplică la alte date” din caseta din dreapta.</p></td>
-			</tr>
-			<tr>
-				<th><label for="lat-location">Locație</label></th>
-				<td><input type="text" id="lat-location" class="regular-text" name="lat[location]" value="<?php echo esc_attr( $m['location'] ); ?>"></td>
-			</tr>
-			<tr>
-				<th>Participanți</th>
-				<td>
-					minim <input type="number" min="0" class="small-text" name="lat[min]" value="<?php echo esc_attr( $m['min'] ); ?>" placeholder="<?php echo (int) $c['min']; ?>">
-					· maxim <input type="number" min="1" class="small-text" name="lat[capacity]" value="<?php echo esc_attr( $m['capacity'] ); ?>" placeholder="<?php echo (int) $c['capacity']; ?>">
-					<select name="lat[count]">
+		<div class="latd-ed">
+			<section class="latd-ed-sec">
+				<h3><span>1</span> Categoria</h3>
+				<div class="latd-catpick">
+					<?php foreach ( $cats as $t ) : $cm = LAT_Helpers::cat_meta( $t->term_id ); ?>
+						<label style="--c:<?php echo esc_attr( $cm['color'] ); ?>"><input type="radio" name="lat_cat_pick" value="<?php echo (int) $t->term_id; ?>" <?php checked( $cat && (int) $cat->term_id === (int) $t->term_id ); ?>><span><b><?php echo esc_html( $t->name ); ?></b><small><?php echo esc_html( ( $cm['free'] ? 'gratuit' : LAT_Helpers::price_label( $cm ) ) . ' · max ' . (int) $cm['capacity'] . ' locuri' ); ?></small></span></label>
+					<?php endforeach; ?>
+				</div>
+				<p class="latd-hint">Din categorie vin prețul, locurile, modul de rezervare și culoarea. Mai jos le poți schimba doar pentru acest eveniment.</p>
+			</section>
+
+			<section class="latd-ed-sec">
+				<h3><span>2</span> Când și unde</h3>
+				<div class="latd-row4">
+					<label class="latd-f"><span>Data</span><input type="date" name="lat[date]" value="<?php echo esc_attr( $m['date'] ); ?>" required></label>
+					<label class="latd-f"><span>De la</span><input type="time" name="lat[start]" value="<?php echo esc_attr( $m['start'] ); ?>"></label>
+					<label class="latd-f"><span>Până la</span><input type="time" name="lat[end]" value="<?php echo esc_attr( $m['end'] ); ?>"></label>
+					<label class="latd-f latd-f-wide"><span>Locație</span><input type="text" name="lat[location]" value="<?php echo esc_attr( $m['location'] ); ?>"></label>
+				</div>
+				<p class="latd-hint">Același eveniment la mai multe date: după salvare, folosește „Duplică la alte date” din dreapta.</p>
+			</section>
+
+			<section class="latd-ed-sec">
+				<h3><span>3</span> Participanți</h3>
+				<div class="latd-row4">
+					<label class="latd-f"><span>Minim</span><input type="number" min="0" name="lat[min]" value="<?php echo esc_attr( $m['min'] ); ?>" placeholder="<?php echo (int) $c['min']; ?>"></label>
+					<label class="latd-f"><span>Maxim (locuri)</span><input type="number" min="1" name="lat[capacity]" value="<?php echo esc_attr( $m['capacity'] ); ?>" placeholder="<?php echo (int) $c['capacity']; ?>"></label>
+					<label class="latd-f latd-f-wide"><span>Ce se numără ca loc</span><select name="lat[count]">
 						<option value="inherit" <?php selected( $m['count'], 'inherit' ); ?>>ca în categorie (<?php echo 'children' === $c['count'] ? 'doar copiii' : 'toți participanții'; ?>)</option>
-						<option value="all" <?php selected( $m['count'], 'all' ); ?>>se numără toți participanții (adulți + copii)</option>
-						<option value="children" <?php selected( $m['count'], 'children' ); ?>>se numără doar copiii</option>
-					</select>
-					<p class="description">Câmpurile goale preiau valorile <?php echo $cat_note; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>. Sub minim, evenimentul apare ca „se confirmă la X înscriși”; cu <?php echo (int) LAT_Helpers::get( 'min_alert_h' ); ?> ore înainte primiți alertă dacă minimul nu e atins.</p>
-				</td>
-			</tr>
-			<tr>
-				<th>Acces</th>
-				<td>
-					<select name="lat[free]" class="lat-free-select">
+						<option value="all" <?php selected( $m['count'], 'all' ); ?>>toți participanții (adulți + copii)</option>
+						<option value="children" <?php selected( $m['count'], 'children' ); ?>>doar copiii</option>
+					</select></label>
+				</div>
+				<p class="latd-hint">Gol = valoarea din categorie (scrisă gri). Sub minim, pe site apare „se confirmă la X înscriși”; cu <?php echo (int) LAT_Helpers::get( 'min_alert_h' ); ?> ore înainte primești alertă dacă minimul nu e atins.</p>
+			</section>
+
+			<section class="latd-ed-sec">
+				<h3><span>4</span> Preț și rezervare</h3>
+				<div class="latd-row4">
+					<label class="latd-f"><span>Acces</span><select name="lat[free]" class="lat-free-select">
 						<option value="inherit" <?php selected( (string) $m['free'], 'inherit' ); ?>>ca în categorie (<?php echo $c['free'] ? 'gratuit' : 'cu plată'; ?>)</option>
 						<option value="0" <?php selected( (string) $m['free'], '0' ); ?>>cu plată</option>
 						<option value="1" <?php selected( (string) $m['free'], '1' ); ?>>gratuit</option>
-					</select>
-					<p class="description">Implicit, evenimentele sunt cu plată. „Gratuit” se alege explicit, iar atunci prețul și plata online nu se mai aplică.</p>
-				</td>
-			</tr>
-			<tr class="lat-row-price">
-				<th>Preț</th>
-				<td>
-					<label><input type="hidden" name="lat[inherit_price]" value="0"><input type="checkbox" name="lat[inherit_price]" value="1" class="lat-inherit-price" <?php checked( $m['inherit_price'] ); ?>> Prețul categoriei (<?php echo esc_html( LAT_Helpers::price_label( $c ) ); ?>)</label>
-					<div class="lat-price-own" <?php echo $m['inherit_price'] ? 'hidden' : ''; ?>>
-						Adult <input type="text" class="small-text" name="lat[price_adult]" value="<?php echo esc_attr( $m['price_adult'] ); ?>" placeholder="80"> lei &nbsp;
-						Copil <input type="text" class="small-text" name="lat[price_child]" value="<?php echo esc_attr( $m['price_child'] ); ?>" placeholder="60"> lei
-						<p class="description">Copil gol = prețul de adult. 0 la adult = adulții însoțitori nu plătesc.</p>
+					</select></label>
+					<label class="latd-f latd-f-wide lat-row-price"><span>Mod de rezervare</span><?php echo LAT_Categories::mode_select( 'lat[mode]', $m['mode'], 'ca în categorie (' . ( 'buy' === $c['mode'] ? 'Cumpără bilet' : 'Rezervă' ) . ')' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
+				</div>
+				<div class="lat-row-price latd-price">
+					<label class="latd-check"><input type="hidden" name="lat[inherit_price]" value="0"><input type="checkbox" name="lat[inherit_price]" value="1" class="lat-inherit-price" <?php checked( $m['inherit_price'] ); ?>> Prețul categoriei: <b><?php echo esc_html( LAT_Helpers::price_label( $c ) ); ?></b></label>
+					<div class="lat-price-own latd-row4" <?php echo $m['inherit_price'] ? 'hidden' : ''; ?>>
+						<label class="latd-f"><span>Adult (lei)</span><input type="text" name="lat[price_adult]" value="<?php echo esc_attr( $m['price_adult'] ); ?>" placeholder="80"></label>
+						<label class="latd-f"><span>Copil (lei)</span><input type="text" name="lat[price_child]" value="<?php echo esc_attr( $m['price_child'] ); ?>" placeholder="60"></label>
+						<p class="latd-hint latd-f-wide">Copil gol = prețul de adult. 0 la adult = adulții însoțitori nu plătesc.</p>
 					</div>
 					<?php if ( LAT_Helpers::price_missing( $eff ) ) : ?>
-						<p class="description" style="color:#b32d2e"><strong>Lipsește prețul.</strong> Evenimentul e cu plată, dar nici el, nici categoria nu au preț. Pe site apare „Preț în curând” și înscrierea merge pe „Rezervă”, fără plată online.</p>
+						<p class="latd-warn"><strong>Lipsește prețul.</strong> Nici evenimentul, nici categoria nu au preț: pe site apare „Preț în curând” și înscrierea merge pe „Rezervă”.</p>
 					<?php endif; ?>
-				</td>
-			</tr>
-			<tr class="lat-row-price">
-				<th>Mod de rezervare</th>
-				<td><?php echo LAT_Categories::mode_select( 'lat[mode]', $m['mode'], 'ca în categorie (' . ( 'buy' === $c['mode'] ? 'Cumpără bilet' : 'Rezervă' ) . ')' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-					<p class="description">„Cumpără bilet”: plata online acum, prin WooCommerce; locul se ține <?php echo (int) LAT_Helpers::get( 'hold_minutes' ); ?> de minute până la plată. „Rezervă”: locul se ține, plata se face la fermă.</p></td>
-			</tr>
-			<tr>
-				<th><label for="lat-ages">Vârstă recomandată</label></th>
-				<td><input type="text" id="lat-ages" class="regular-text" name="lat[ages]" value="<?php echo esc_attr( $m['ages'] ); ?>" placeholder="<?php echo esc_attr( $c['ages'] ? $c['ages'] : '4–12 ani' ); ?>"></td>
-			</tr>
-			<tr>
-				<th><label for="lat-bring">Ce să aducă</label></th>
-				<td><textarea id="lat-bring" rows="2" class="large-text" name="lat[bring]" placeholder="Cizme de cauciuc, haine care se pot murdări"><?php echo esc_textarea( $m['bring'] ); ?></textarea></td>
-			</tr>
-			<tr>
-				<th><label for="lat-cta">Text buton</label></th>
-				<td><input type="text" id="lat-cta" class="regular-text" name="lat[cta]" value="<?php echo esc_attr( $m['cta'] ); ?>" placeholder="<?php echo esc_attr( $c['cta'] ? $c['cta'] : 'Rezervă / Cumpără bilet' ); ?>"></td>
-			</tr>
-			<tr>
-				<th>Înscrieri</th>
-				<td>
-					<label><input type="hidden" name="lat[open]" value="0"><input type="checkbox" name="lat[open]" value="1" <?php checked( $m['open'] ); ?>> Deschise</label><br><br>
-					se închid cu <input type="number" min="0" class="small-text" name="lat[deadline]" value="<?php echo (int) $m['deadline']; ?>"> ore înainte ·
-					maximum <input type="number" min="1" class="small-text" name="lat[max_per]" value="<?php echo (int) $m['max_per']; ?>"> persoane pe o înscriere
-				</td>
-			</tr>
-		</table>
-		<p class="description">Descrierea evenimentului se scrie în editorul de mai sus și apare pe pagina lui. „Rezumatul” (dacă îl completați) apare pe card.</p>
+				</div>
+				<p class="latd-hint lat-row-price">„Cumpără bilet”: plata online acum, prin WooCommerce; locul se ține <?php echo (int) LAT_Helpers::get( 'hold_minutes' ); ?> de minute până la plată. „Rezervă”: locul se ține, plata se face la fermă.</p>
+			</section>
+
+			<section class="latd-ed-sec">
+				<h3><span>5</span> Pentru participanți</h3>
+				<div class="latd-row4">
+					<label class="latd-f"><span>Vârstă recomandată</span><input type="text" name="lat[ages]" value="<?php echo esc_attr( $m['ages'] ); ?>" placeholder="<?php echo esc_attr( $c['ages'] ? $c['ages'] : '4–12 ani' ); ?>"></label>
+					<label class="latd-f"><span>Text pe buton</span><input type="text" name="lat[cta]" value="<?php echo esc_attr( $m['cta'] ); ?>" placeholder="<?php echo esc_attr( $c['cta'] ? $c['cta'] : 'Rezervă / Cumpără bilet' ); ?>"></label>
+					<label class="latd-f latd-f-wide"><span>Ce să aducă</span><textarea rows="2" name="lat[bring]" placeholder="Cizme de cauciuc, haine care se pot murdări"><?php echo esc_textarea( $m['bring'] ); ?></textarea></label>
+				</div>
+			</section>
+
+			<section class="latd-ed-sec">
+				<h3><span>6</span> Înscrieri</h3>
+				<div class="latd-row4">
+					<label class="latd-switch"><input type="hidden" name="lat[open]" value="0"><input type="checkbox" name="lat[open]" value="1" <?php checked( $m['open'] ); ?>><i></i> Înscrieri deschise</label>
+					<label class="latd-f"><span>Se închid cu (ore înainte)</span><input type="number" min="0" name="lat[deadline]" value="<?php echo (int) $m['deadline']; ?>"></label>
+					<label class="latd-f"><span>Maxim persoane / înscriere</span><input type="number" min="1" name="lat[max_per]" value="<?php echo (int) $m['max_per']; ?>"></label>
+				</div>
+			</section>
+		</div>
 		<?php
 	}
 
@@ -299,6 +314,9 @@ class LAT_Workshops {
 			$data['capacity'] = max( 1, (int) $data['capacity'] );
 		}
 		update_post_meta( $post_id, '_lat', $data );
+		if ( isset( $_POST['lat_cat_pick'] ) && absint( $_POST['lat_cat_pick'] ) && term_exists( absint( $_POST['lat_cat_pick'] ), LAT_Helpers::TAX ) ) {
+			wp_set_object_terms( $post_id, array( absint( $_POST['lat_cat_pick'] ) ), LAT_Helpers::TAX );
+		}
 
 		// Copii la alte date, cerute din căsuța „Promovare și embed”.
 		if ( ! empty( $_POST['lat_dup_dates'] ) ) {
@@ -412,7 +430,7 @@ class LAT_Workshops {
 		return $actions;
 	}
 
-	private static function copy( $source_id, $date, $status = 'draft' ) {
+	public static function copy( $source_id, $date, $status = 'draft' ) {
 		$post = get_post( $source_id );
 		$new  = wp_insert_post(
 			array(
