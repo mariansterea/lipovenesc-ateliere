@@ -527,7 +527,7 @@ class LAT_Frontend {
 			'%s: %sla Ferma Lipovenesc din Jurilovca, %s, între orele %s și %s.%s',
 			$name,
 			$what,
-			LAT_Helpers::date_label( $m['date'] ),
+			lcfirst( LAT_Helpers::date_label( $m['date'] ) ),
 			$m['start'],
 			$m['end'],
 			$m['performer'] ? ' Cu ' . $m['performer'] . '.' : ''
