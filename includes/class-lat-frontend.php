@@ -443,15 +443,16 @@ class LAT_Frontend {
 		$pa    = LAT_Helpers::num( $m['price_adult'] );
 		$pc    = LAT_Helpers::num( $m['price_child'] );
 		$low   = min( array_filter( array( $pa, $pc ), 'is_numeric' ) ?: array( 0 ) );
+		$name  = html_entity_decode( wp_strip_all_tags( get_the_title( $id ) ), ENT_QUOTES, 'UTF-8' );
 		$event = array(
 			'@context'            => 'https://schema.org',
 			'@type'               => 'Event',
-			'name'                => get_the_title( $id ),
+			'name'                => $name,
 			'startDate'           => $start,
 			'endDate'             => $end,
 			'eventStatus'         => 'cancelled' === $state ? 'https://schema.org/EventCancelled' : 'https://schema.org/EventScheduled',
 			'eventAttendanceMode' => 'https://schema.org/OfflineEventAttendanceMode',
-			'description'         => wp_trim_words( wp_strip_all_tags( get_post_field( 'post_content', $id ) ), 60 ),
+			'description'         => self::schema_description( $id, $m, $name ),
 			'location'            => array(
 				'@type'   => 'Place',
 				'name'    => $m['location'] ? $m['location'] : 'Ferma Lipovenesc',
@@ -469,6 +470,16 @@ class LAT_Frontend {
 				'name'  => 'Ferma Lipovenesc',
 				'url'   => home_url( '/' ),
 			),
+			'performer'           => $m['performer']
+				? array(
+					'@type' => 'PerformingGroup',
+					'name'  => $m['performer'],
+				)
+				: array(
+					'@type' => 'Organization',
+					'name'  => 'Ferma Lipovenesc',
+					'url'   => home_url( '/' ),
+				),
 			'offers'              => array(
 				'@type'         => 'Offer',
 				'price'         => (string) ( null === $low ? 0 : $low ),
@@ -491,6 +502,36 @@ class LAT_Frontend {
 			$event['keywords'] = $m['cat_name'];
 		}
 		self::$schema[ $id ] = $event;
+	}
+
+	/**
+	 * Descriere pentru date structurate: rezumat, apoi conținut, apoi o frază generată
+	 * din titlu, categorie și dată, ca să nu rămână niciodată goală.
+	 */
+	private static function schema_description( $id, $m, $name ) {
+		$clean = function ( $t ) {
+			return trim( html_entity_decode( wp_strip_all_tags( strip_shortcodes( (string) $t ) ), ENT_QUOTES, 'UTF-8' ) );
+		};
+		$text = $clean( get_post_field( 'post_excerpt', $id ) );
+		if ( '' === $text ) {
+			$text = $clean( get_post_field( 'post_content', $id ) );
+		}
+		if ( '' === $text ) {
+			$text = $clean( get_post_meta( $id, '_yoast_wpseo_metadesc', true ) );
+		}
+		if ( '' !== $text ) {
+			return wp_trim_words( $text, 60 );
+		}
+		$what = $m['cat_name'] ? mb_strtolower( $m['cat_name'] ) . ' ' : 'eveniment ';
+		return sprintf(
+			'%s: %sla Ferma Lipovenesc din Jurilovca, %s, între orele %s și %s.%s',
+			$name,
+			$what,
+			LAT_Helpers::date_label( $m['date'] ),
+			$m['start'],
+			$m['end'],
+			$m['performer'] ? ' Cu ' . $m['performer'] . '.' : ''
+		);
 	}
 
 	public static function print_schema() {

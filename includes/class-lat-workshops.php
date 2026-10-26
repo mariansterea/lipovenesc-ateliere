@@ -188,6 +188,7 @@ class LAT_Workshops {
 				<div class="latd-row4">
 					<label class="latd-f"><span>Vârstă recomandată</span><input type="text" name="lat[ages]" value="<?php echo esc_attr( $m['ages'] ); ?>" placeholder="<?php echo esc_attr( $c['ages'] ? $c['ages'] : '4–12 ani' ); ?>"></label>
 					<label class="latd-f"><span>Text pe buton</span><input type="text" name="lat[cta]" value="<?php echo esc_attr( $m['cta'] ); ?>" placeholder="<?php echo esc_attr( $c['cta'] ? $c['cta'] : 'Rezervă / Cumpără bilet' ); ?>"></label>
+					<label class="latd-f latd-f-wide"><span>Cine susține (artist, trupă, meșter, gazdă)</span><input type="text" name="lat[performer]" value="<?php echo esc_attr( $m['performer'] ); ?>" placeholder="Ferma Lipovenesc"></label>
 					<label class="latd-f latd-f-wide"><span>Ce să aducă</span><textarea rows="2" name="lat[bring]" placeholder="Cizme de cauciuc, haine care se pot murdări"><?php echo esc_textarea( $m['bring'] ); ?></textarea></label>
 				</div>
 			</section>
@@ -304,6 +305,7 @@ class LAT_Workshops {
 			'ages'          => sanitize_text_field( isset( $in['ages'] ) ? $in['ages'] : '' ),
 			'bring'         => sanitize_textarea_field( isset( $in['bring'] ) ? $in['bring'] : '' ),
 			'cta'           => sanitize_text_field( isset( $in['cta'] ) ? $in['cta'] : '' ),
+			'performer'     => sanitize_text_field( isset( $in['performer'] ) ? $in['performer'] : '' ),
 			'deadline'      => absint( isset( $in['deadline'] ) ? $in['deadline'] : 0 ),
 			'max_per'       => max( 1, absint( isset( $in['max_per'] ) ? $in['max_per'] : 1 ) ),
 			'open'          => empty( $in['open'] ) ? 0 : 1,

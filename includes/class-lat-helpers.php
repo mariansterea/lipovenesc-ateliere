@@ -154,6 +154,7 @@ class LAT_Helpers {
 			'cancelled'   => 0,
 			'product_id'  => 0,
 			'cta'         => '',
+			'performer'   => '',
 		);
 	}
 
